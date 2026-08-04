@@ -6,7 +6,7 @@ No vocabulary lives here — it lives in the mapping config the caller supplies.
 """
 from .mapping import Mapping, ScoreSpec, load_mapping, KNOWN_SLOTS, KNOWN_SCORE_ENCODINGS
 from .emit import set_trace_standard, emit_misses
-from .spans import span_descriptor, litellm_metadata, observe_span
+from .spans import span_descriptor, litellm_metadata, observe_span, traced
 from .redact import redact
 
 __all__ = [
@@ -20,5 +20,6 @@ __all__ = [
     "span_descriptor",
     "litellm_metadata",
     "observe_span",
+    "traced",
     "redact",
 ]

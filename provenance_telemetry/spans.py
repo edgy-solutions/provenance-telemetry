@@ -85,3 +85,33 @@ def observe_span(operation: str, **attributes: Any) -> Iterator[Dict[str, Any]]:
 
         _miss(f"observe_span failed: {exc}")
     yield d
+
+
+def traced(name: Optional[str] = None, as_type: Optional[str] = None):
+    """Decorator that OPENS a Langfuse trace around the wrapped function.
+
+    The one primitive `set_trace_standard`/`observe_span` assume but can't provide:
+    they enrich/nest the *current* trace; this creates it. Enrich the opened trace
+    with `set_trace_standard` and nest LLM calls with `observe_span` inside.
+
+    **Pass-through when Langfuse is disabled** — file-mode / no-creds code carries
+    no runtime dependency and no import cost. (Generalizes the legacy `safe_observe`.)
+    Gating is evaluated at decoration time, matching the deployment model where env
+    is set before the process imports its modules.
+    """
+    def deco(fn):
+        if not (os.getenv("LANGFUSE_SECRET_KEY") and os.getenv("LANGFUSE_PUBLIC_KEY")):
+            return fn
+        try:
+            from langfuse.decorators import observe
+
+            kwargs = {}
+            if name is not None:
+                kwargs["name"] = name
+            if as_type is not None:
+                kwargs["as_type"] = as_type
+            return observe(**kwargs)(fn)
+        except Exception:  # noqa: BLE001 — SDK absent -> pass-through, never a crash
+            return fn
+
+    return deco
