@@ -1,0 +1,25 @@
+[project]
+name = "provenance-telemetry"
+version = "0.1.0"
+description = "Project an existing provenance doctrine into an observability backend. Vocabulary is config, not code."
+readme = "README.md"
+requires-python = ">=3.9"
+# The dependency list IS the adoption pitch. Four deps, one doctrine, config-
+# governed vocabulary — the whole argument a security review needs is visible
+# here. Do not add a fifth without a very good reason.
+dependencies = [
+    "langfuse>=2.0.0,<3.0.0",   # v2 now; v3/OTEL is a sealed migration (ADR-0038 Phase 5)
+    "opentelemetry-api>=1.20.0",
+    "pydantic>=2.0.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["provenance_telemetry"]

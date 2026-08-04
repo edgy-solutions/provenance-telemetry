@@ -1,0 +1,27 @@
+# EXAMPLE mapping — illustrative only. The real mesh mapping ships as ADR-0036
+# seed config IN THE MESH REPO, where a CI truth-check asserts every field name
+# below exists in the mesh's provenance contracts. The leaf validates only that
+# the left-hand slots/encodings are known; it never checks these names.
+version: 1
+
+slots:                       # langfuse slot  ->  provenance field (yours)
+  trace_id:   request_key    # artifact identity (ETag+Key) — never LLM-derived
+  user_id:    authz_id       # svc:* for service identities; the org's user identity at work
+  session_id: session_id     # UI conversation identity (X-Session-Id)
+
+tags:         [engine, verb, domain]
+
+metadata:     [subject_class, resolved_via, chart_version]
+
+scores:                      # honest-degradation signals projected from the decision-record schema
+  confidence_tier: {encoding: ordinal}
+  needs_review:    {encoding: fraction}
+  coherence:       {encoding: binary_per_join}
+  crops_failed:    {encoding: count_total}
+
+content_bearing:             # hashed-not-dropped (join-preserving redaction)
+  - mpn
+  - notice_id
+  - snippet
+  - matched_text
+  - override_reason
