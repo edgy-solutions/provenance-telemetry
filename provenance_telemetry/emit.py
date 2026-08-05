@@ -1,15 +1,27 @@
-"""set_trace_standard — project provenance values onto the current Langfuse trace.
+"""Project provenance onto the current Langfuse trace — langfuse v3/v4 (OpenTelemetry).
 
-Fail-soft-and-countable (the witness-channel axiom): a Langfuse outage, a missing
-SDK, or an emit error is logged and counted (`emit_misses()`), never raised. The
-telemetry channel must not stop the work it observes — a review starts even when
-Langfuse is down.
+Two entry points:
+
+* ``set_trace_standard(mapping, values)`` — enrich the CURRENT trace in place. v4 has no
+  imperative ``update_current_trace``; trace-level fields are OTel span attributes
+  (``user.id``, ``session.id``, ``langfuse.trace.tags`` …), so we set them on the active
+  span. The trace *id* cannot be changed once a trace is running — set it at the entry via
+  ``observed_trace`` (below), never here.
+* ``observed_trace(mapping, values, *, name)`` — the v4-native ENTRY: open (or JOIN) a trace
+  keyed on the mapping's ``trace_id`` and enrich it. ``create_trace_id(seed=...)`` makes the
+  langfuse id deterministic from an upstream id (X-Trace-Id / a doc's id), so the same id on
+  two services lands ONE trace — the join is native, not a v2 private-API hack.
+
+Fail-soft-and-countable (the witness-channel axiom): a Langfuse outage, a missing SDK, or an
+emit error is logged and counted (``emit_misses()``), never raised.
 """
 from __future__ import annotations
 
+import json
 import logging
 import os
-from typing import Any, Dict
+from contextlib import contextmanager
+from typing import Any, Dict, Iterator
 
 from .mapping import Mapping
 from .redact import redact
@@ -34,11 +46,6 @@ def _enabled() -> bool:
     return bool(os.getenv("LANGFUSE_SECRET_KEY") and os.getenv("LANGFUSE_PUBLIC_KEY"))
 
 
-def _slot_kwarg(slot: str) -> str:
-    # langfuse update_current_trace uses `id` for the trace identity.
-    return "id" if slot == "trace_id" else slot
-
-
 def _encode_score(value: Any, encoding: str) -> float:
     if encoding == "count_total" and isinstance(value, (list, tuple)) and len(value) == 2:
         num, den = value
@@ -47,19 +54,19 @@ def _encode_score(value: Any, encoding: str) -> float:
 
 
 def set_trace_standard(mapping: Mapping, values: Dict[str, Any]) -> None:
-    """Project ``values`` onto the current Langfuse trace per ``mapping``.
+    """Project ``values`` onto the current Langfuse trace per ``mapping`` (langfuse v4).
 
-    ``values`` is a flat dict of the caller's provenance fields; the mapping
-    decides which land in which Langfuse slot, which become tags/metadata, which
-    become scores, and which are content-bearing (hashed, not dropped). Never
-    raises.
+    Sets the mapped identity/tags/metadata as OTel span attributes on the active span and
+    emits scores. The ``trace_id`` slot is NOT applied here — v4 fixes a trace's id at
+    creation; use ``observed_trace`` at the entry to open/join on a chosen id. Never raises.
     """
     if not _enabled():
         return
     try:
-        from langfuse.decorators import langfuse_context  # lazy: no import cost when disabled
+        from langfuse import LangfuseOtelSpanAttributes as A, get_client
+        from opentelemetry import trace as _otel
     except Exception:  # noqa: BLE001 — SDK absent is a soft miss, not a crash
-        _miss("langfuse SDK unavailable")
+        _miss("langfuse v4 / opentelemetry unavailable")
         return
 
     try:
@@ -71,44 +78,74 @@ def set_trace_standard(mapping: Mapping, values: Dict[str, Any]) -> None:
                 return None
             return redact(v) if field in content_bearing else v
 
-        trace_kwargs: Dict[str, Any] = {}
+        span = _otel.get_current_span()
+
+        # slots -> trace-level OTel attributes. trace_id is set at the entry, not here.
+        _slot_attr = {"user_id": A.TRACE_USER_ID, "session_id": A.TRACE_SESSION_ID,
+                      "release": A.RELEASE, "version": A.VERSION}
         for slot, field in mapping.slots.items():
             val = project(field)
-            if val is None:
+            if val is None or slot == "trace_id":
                 continue
-            if slot == "trace_id":
-                # langfuse v2 decorators fix the trace id when @observe CREATES the trace
-                # and cannot change it on a running trace; `update_current_trace` has no
-                # `id` kwarg — passing one raises and aborts the ENTIRE enrichment (tags,
-                # user, metadata all lost with it). Best-effort set the ROOT id instead:
-                # it takes effect only when this runs BEFORE the trace starts, otherwise
-                # the trace keeps its own id and we still enrich everything else. (Joining
-                # a trace across the @observe boundary is the caller's job at the entry.)
-                try:
-                    langfuse_context._set_root_trace_id(str(val))
-                except Exception:  # noqa: BLE001 — never let id-setting sink the enrichment
-                    pass
-                continue
-            trace_kwargs[_slot_kwarg(slot)] = val
+            attr = _slot_attr.get(slot)
+            if attr is not None:
+                span.set_attribute(attr, str(val))
 
         tags = [str(project(f)) for f in mapping.tags if values.get(f) is not None]
         if tags:
-            trace_kwargs["tags"] = tags
+            span.set_attribute(A.TRACE_TAGS, tags)
 
         md = {f: project(f) for f in mapping.metadata if values.get(f) is not None}
         if md:
-            trace_kwargs["metadata"] = md
+            span.set_attribute(A.TRACE_METADATA, json.dumps(md, default=str))
 
-        if trace_kwargs:
-            langfuse_context.update_current_trace(**trace_kwargs)
-
-        for name, spec in mapping.scores.items():
-            if values.get(name) is not None:
-                try:
-                    langfuse_context.score_current_trace(
-                        name=name, value=_encode_score(values[name], spec.encoding)
-                    )
-                except Exception as exc:  # noqa: BLE001 — one bad score never sinks the trace
-                    _miss(f"score {name!r} failed: {exc}")
+        if mapping.scores:
+            client = get_client()
+            for name, spec in mapping.scores.items():
+                if values.get(name) is not None:
+                    try:
+                        client.score_current_trace(
+                            name=name, value=_encode_score(values[name], spec.encoding)
+                        )
+                    except Exception as exc:  # noqa: BLE001 — one bad score never sinks the trace
+                        _miss(f"score {name!r} failed: {exc}")
     except Exception as exc:  # noqa: BLE001 — the whole emission is soft
         _miss(f"emit failed: {exc}")
+
+
+@contextmanager
+def observed_trace(mapping: Mapping, values: Dict[str, Any], *, name: str = "operation",
+                   as_type: str = "span") -> Iterator[None]:
+    """Open (or JOIN) a trace keyed on the mapping's ``trace_id`` and enrich it (langfuse v4).
+
+    The v4-native entry primitive: derives a deterministic langfuse trace id from the
+    mapped ``trace_id`` value via ``create_trace_id(seed=...)`` so the SAME upstream id
+    (X-Trace-Id, a doc's id) on two services lands ONE trace — a real join. Everything the
+    body opens (child spans, LLM generations under the active OTel context) nests under it.
+    Fail-soft: on any setup error the body still runs, untraced.
+    """
+    if not _enabled():
+        yield
+        return
+    try:
+        from langfuse import get_client
+        client = get_client()
+        seed = None
+        tid_field = mapping.slots.get("trace_id")
+        if tid_field is not None and values.get(tid_field) is not None:
+            seed = str(values[tid_field])
+        trace_context = {"trace_id": client.create_trace_id(seed=seed)} if seed else None
+        cm = client.start_as_current_observation(
+            trace_context=trace_context, name=name, as_type=as_type
+        )
+    except Exception as exc:  # noqa: BLE001 — never block the work on telemetry setup
+        _miss(f"observed_trace setup failed: {exc}")
+        yield
+        return
+
+    with cm:
+        try:
+            set_trace_standard(mapping, values)
+        except Exception as exc:  # noqa: BLE001
+            _miss(f"observed_trace enrich failed: {exc}")
+        yield

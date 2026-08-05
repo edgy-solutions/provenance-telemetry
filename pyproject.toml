@@ -8,7 +8,7 @@ requires-python = ">=3.9"
 # governed vocabulary — the whole argument a security review needs is visible
 # here. Do not add a fifth without a very good reason.
 dependencies = [
-    "langfuse>=2.0.0,<3.0.0",   # v2 now; v3/OTEL is a sealed migration (ADR-0038 Phase 5)
+    "langfuse>=3.0.0",          # v3/v4 OpenTelemetry API (create_trace_id / start_as_current_observation / propagate_attributes)
     "opentelemetry-api>=1.20.0",
     "pydantic>=2.0.0",
     "pyyaml>=6.0",
