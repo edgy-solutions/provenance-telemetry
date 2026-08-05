@@ -74,8 +74,22 @@ def set_trace_standard(mapping: Mapping, values: Dict[str, Any]) -> None:
         trace_kwargs: Dict[str, Any] = {}
         for slot, field in mapping.slots.items():
             val = project(field)
-            if val is not None:
-                trace_kwargs[_slot_kwarg(slot)] = val
+            if val is None:
+                continue
+            if slot == "trace_id":
+                # langfuse v2 decorators fix the trace id when @observe CREATES the trace
+                # and cannot change it on a running trace; `update_current_trace` has no
+                # `id` kwarg — passing one raises and aborts the ENTIRE enrichment (tags,
+                # user, metadata all lost with it). Best-effort set the ROOT id instead:
+                # it takes effect only when this runs BEFORE the trace starts, otherwise
+                # the trace keeps its own id and we still enrich everything else. (Joining
+                # a trace across the @observe boundary is the caller's job at the entry.)
+                try:
+                    langfuse_context._set_root_trace_id(str(val))
+                except Exception:  # noqa: BLE001 — never let id-setting sink the enrichment
+                    pass
+                continue
+            trace_kwargs[_slot_kwarg(slot)] = val
 
         tags = [str(project(f)) for f in mapping.tags if values.get(f) is not None]
         if tags:
