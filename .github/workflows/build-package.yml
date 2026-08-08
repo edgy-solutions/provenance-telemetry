@@ -1,0 +1,106 @@
+name: Build Python Package
+
+# Builds the provenance-telemetry sdist+wheel on every push and PR so consumers
+# can grab the latest from a workflow artifact. On tag pushes (vX.Y.Z) the
+# artifacts are attached to a GitHub Release AND published to PyPI (trusted
+# publishing — OIDC, no API token stored anywhere).
+#
+# Distribution name and import package agree: `pip install provenance-telemetry`
+# -> `import provenance_telemetry`.
+#
+#   pip install provenance-telemetry
+#   # or pin directly from git, to a TAG and never a branch:
+#   uv add "provenance-telemetry @ git+https://github.com/edgy-solutions/provenance-telemetry.git@v0.1.0"
+#
+# ONE-TIME SETUP for the publish job (it cannot work until this is done):
+#   1. On PyPI: Account -> Publishing -> add a GitHub trusted publisher with
+#      owner `edgy-solutions`, repo `provenance-telemetry`,
+#      workflow `build-package.yml`, environment `pypi`.
+#   2. In this repo: Settings -> Environments -> create `pypi`.
+# Until step 1 exists the tag build still succeeds and the Release is still
+# created; only the publish job fails, and it fails LOUDLY rather than silently
+# skipping — a release that quietly did not publish is the worst outcome here.
+
+on:
+  push:
+    branches: [master, main]
+    tags: ['v*']
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed to publish the wheel as a release asset on tag pushes
+
+jobs:
+  build:
+    name: Build wheel
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Build wheel + sdist
+        run: uv build          # both sdist + wheel (PyPI wants both)
+
+      # The tag and the packaged version must agree. Publishing v0.1.1 from a
+      # tree whose pyproject still says 0.1.0 yields an immutable PyPI release
+      # under the wrong number that can never be corrected, only yanked.
+      - name: Assert the tag matches the packaged version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          VER=$(ls dist/*.tar.gz | sed -E 's/.*-([0-9][^-]*)\.tar\.gz/\1/')
+          echo "tag=$TAG packaged=$VER"
+          test "$TAG" = "$VER" || {
+            echo "::error::tag v$TAG does not match packaged version $VER —"
+            echo "::error::bump the version field in pyproject.toml, or retag."
+            exit 1
+          }
+
+      # A wheel that imports on the build machine but not from the artifact is
+      # the packaging equivalent of a passing suite over a broken image. Install
+      # the built wheel into a clean venv and import it.
+      - name: Smoke-test the built wheel in a clean venv
+        run: |
+          uv venv --python 3.12 /tmp/smoke
+          VIRTUAL_ENV=/tmp/smoke uv pip install dist/*.whl
+          /tmp/smoke/bin/python -c "import provenance_telemetry as pt; print('ok', sorted(pt.__all__))"
+
+      - name: Upload as workflow artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: provenance-telemetry-dist
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Attach to GitHub Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v3
+        with:
+          files: dist/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build
+    # Only publish on a version tag push (e.g. v0.1.0), never on branch/PR builds.
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write   # OIDC token for PyPI Trusted Publishing — no API token/secret needed
+    steps:
+      - name: Download built distributions
+        uses: actions/download-artifact@v8
+        with:
+          name: provenance-telemetry-dist
+          path: dist
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

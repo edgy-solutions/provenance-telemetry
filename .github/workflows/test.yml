@@ -1,0 +1,105 @@
+name: Tests
+
+# Runs the suite on every push and PR, across the FULL supported Python range.
+#
+# The matrix is the point, not decoration. Before this workflow existed the
+# package declared `requires-python = ">=3.9"` while two of its four dependencies
+# (langfuse and opentelemetry-api) refuse anything below 3.10 — so the floor was
+# not merely untested, it was FALSE, and the failure it produced would have named
+# langfuse rather than this package. A support range nothing exercises is a claim;
+# running the floor and the ceiling turns it into a measurement.
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: py${{ matrix.python }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Floor and ceiling of `requires-python = ">=3.10,<3.15"`, plus the
+        # versions in between. If a future dependency bump raises the real floor,
+        # the 3.10 leg fails HERE rather than in an adopter's install.
+        python: ["3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Create venv
+        run: uv venv --python ${{ matrix.python }}
+
+      - name: Install package + dev extra
+        run: uv pip install -e ".[dev]"
+
+      - name: Show resolved versions
+        run: uv pip list | grep -Ei "^(langfuse|opentelemetry|pydantic|PyYAML|pytest)" || true
+
+      # The suite must run with Langfuse DISABLED. Every entry point in this
+      # package gates on LANGFUSE_SECRET_KEY + LANGFUSE_PUBLIC_KEY being present,
+      # so a runner that happened to carry real credentials would take entirely
+      # different code paths AND emit test spans into a real project. Unset
+      # explicitly rather than trusting the runner to be clean.
+      - name: Run tests (telemetry disabled)
+        env:
+          LANGFUSE_SECRET_KEY: ""
+          LANGFUSE_PUBLIC_KEY: ""
+          LANGFUSE_HOST: ""
+        run: |
+          set -o pipefail
+          .venv/bin/python -m pytest tests -q --no-header -rs \
+            --junitxml=junit-${{ matrix.python }}.xml 2>&1 | tee pytest-output.txt
+
+      # A skipped test is indistinguishable from a passing one in a summary line.
+      # This package's suite is designed to run without credentials, so a skip
+      # citing a missing import means CI is under-installed — the coverage
+      # quietly shrank and the job still went green.
+      - name: Fail on dependency-driven skips
+        if: always()
+        run: |
+          if grep -E "SKIPPED.*(could not import|not installed|No module named)" pytest-output.txt; then
+            echo "::error::Tests skipped because a dependency is missing. CI is under-installed —"
+            echo "::error::add the package so these tests actually run instead of silently passing."
+            exit 1
+          fi
+          echo "No dependency-driven skips."
+
+      # The public surface is the contract. An export that disappears is a
+      # breaking change for every adopter, and nothing else in the suite would
+      # notice — the README documents exactly these names.
+      - name: Assert the documented public surface still exists
+        run: |
+          .venv/bin/python - <<'PY'
+          import provenance_telemetry as pt
+          documented = {"Mapping","ScoreSpec","load_mapping","KNOWN_SLOTS",
+                        "KNOWN_SCORE_ENCODINGS","set_trace_standard","observed_trace",
+                        "emit_misses","span_descriptor","litellm_metadata",
+                        "observe_span","traced","redact"}
+          missing = sorted(n for n in documented if not hasattr(pt, n))
+          assert not missing, f"public surface lost: {missing}"
+          extra = sorted(set(pt.__all__) - documented)
+          assert not extra, f"exported but undocumented in README: {extra}"
+          print(f"public surface intact ({len(documented)} names)")
+          PY
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: junit-py${{ matrix.python }}
+          path: junit-${{ matrix.python }}.xml
+          if-no-files-found: warn
+          retention-days: 14

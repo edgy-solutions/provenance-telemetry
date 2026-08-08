@@ -1,12 +1,49 @@
 [project]
+# Distribution name == import name modulo the hyphen/underscore normalisation
+# PyPI applies (`provenance-telemetry` -> `import provenance_telemetry`). Kept
+# deliberately aligned: the sibling package's distribution rename is exactly how
+# consumers pinning the old name broke, since a rename of one namespace is
+# invisible to code that only ever types the other.
 name = "provenance-telemetry"
 version = "0.1.0"
 description = "Project an existing provenance doctrine into an observability backend. Vocabulary is config, not code."
 readme = "README.md"
-requires-python = ">=3.9"
+# RAISED from ">=3.9" (2026-08-07) — that floor was FALSE, not merely untested.
+# `langfuse` (>=3.10) and `opentelemetry-api` (>=3.10) both refuse 3.9, so the
+# package could never have installed there: pip fails resolving langfuse and
+# blames LANGFUSE, not this package's metadata. A support claim nothing exercises
+# is a claim, not a measurement — the CI matrix now runs the floor so this cannot
+# drift back into fiction.
+requires-python = ">=3.10,<3.15"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Chris Nogradi", email = "cnogradi@gmail.com" },
+]
+keywords = ["langfuse", "opentelemetry", "observability", "provenance", "telemetry", "tracing", "llm"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: System :: Monitoring",
+]
+
 # The dependency list IS the adoption pitch. Four deps, one doctrine, config-
 # governed vocabulary — the whole argument a security review needs is visible
 # here. Do not add a fifth without a very good reason.
+#
+# NOTE ON PLACEMENT: every key belonging to [project] must appear BEFORE the
+# first sub-table ([project.urls] etc.). TOML has no "end of table" marker, so a
+# sub-table inserted above this list silently reparents `dependencies` into it —
+# which is exactly what happened on the first edit here, producing
+# `TypeError: URL 'dependencies' of field 'project.urls' must be a string`.
+# Reading the file could not show it; building it did.
 dependencies = [
     "langfuse>=3.0.0",          # v3/v4 OpenTelemetry API (create_trace_id / start_as_current_observation / propagate_attributes)
     "opentelemetry-api>=1.20.0",
@@ -16,6 +53,11 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest"]
+
+[project.urls]
+Homepage = "https://github.com/edgy-solutions/provenance-telemetry"
+Repository = "https://github.com/edgy-solutions/provenance-telemetry"
+Issues = "https://github.com/edgy-solutions/provenance-telemetry/issues"
 
 [build-system]
 requires = ["hatchling"]
