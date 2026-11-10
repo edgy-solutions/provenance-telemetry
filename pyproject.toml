@@ -5,7 +5,7 @@
 # consumers pinning the old name broke, since a rename of one namespace is
 # invisible to code that only ever types the other.
 name = "provenance-telemetry"
-version = "0.1.0"
+version = "0.2.0"
 description = "Project an existing provenance doctrine into an observability backend. Vocabulary is config, not code."
 readme = "README.md"
 # RAISED from ">=3.9" (2026-08-07) — that floor was FALSE, not merely untested.
@@ -45,7 +45,11 @@ classifiers = [
 # `TypeError: URL 'dependencies' of field 'project.urls' must be a string`.
 # Reading the file could not show it; building it did.
 dependencies = [
-    "langfuse>=3.0.0",          # v3/v4 OpenTelemetry API (create_trace_id / start_as_current_observation / propagate_attributes)
+    # >=4.7.0: older SDKs land data up to 15 min late on Langfuse v4. <6: a major must not
+    # arrive unreviewed (the boundary primitives read the SDK's tracer internals).
+    # opentelemetry-sdk is imported (inside fail-soft blocks) but arrives transitively
+    # with langfuse, so it is deliberately not a fifth dependency.
+    "langfuse>=4.7.0,<6",
     "opentelemetry-api>=1.20.0",
     "pydantic>=2.0.0",
     "pyyaml>=6.0",

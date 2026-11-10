@@ -10,13 +10,13 @@
 
 ```toml
 # pyproject.toml — from PyPI (preferred)
-dependencies = ["provenance-telemetry>=0.1.0,<0.2"]
+dependencies = ["provenance-telemetry>=0.2.0,<0.3"]
 ```
 
 ```toml
 # pyproject.toml — direct from git, pinned to a TAG (pre-index form)
 dependencies = [
-  "provenance-telemetry @ git+https://github.com/edgy-solutions/provenance-telemetry.git@v0.1.0",
+  "provenance-telemetry @ git+https://github.com/edgy-solutions/provenance-telemetry.git@v0.2.0",
 ]
 ```
 
@@ -128,7 +128,7 @@ Decorator that opens a span/trace around a function. For a top-level entry that 
 
 ### `emit_misses() -> int`
 
-**Fail-soft is only honest if it is countable.** Every soft failure — SDK absent, Langfuse unreachable, a bad score, an enrichment error — increments this counter and logs a warning; nothing raises. Telemetry must not stop the work it observes, but *silent* telemetry loss is indistinguishable from a healthy quiet system. Export it:
+**Fail-soft is only honest if it is countable.** Telemetry must not stop the work it observes, but *silent* telemetry loss is indistinguishable from a healthy quiet system. Export it:
 
 ```python
 @app.get("/health")
@@ -136,7 +136,24 @@ def health():
     return {"status": "ok", "telemetry_misses": emit_misses()}
 ```
 
-A rising count means you are flying blind and do not know it. Alert on the **derivative**, not the value.
+**What counts, and in what units:** *failed calls plus spans lost on export.* A setup, enrichment, score, flush or boundary error in the calling thread counts 1. A **refused or raised export** (a 401, a 5xx, a network error) happens in the OTel batch exporter thread; an export witness, installed lazily on first use, wraps the exporter and counts **one per span in the lost batch**. If the SDK's internal shape is not recognised (a future SDK) the witness is not installed and one warning is logged per process (not counted).
+
+**A zero is not proof that emission works.** Pair the counter with a positive control (a known span that must appear in the backend): one production incident ran 45 days on a refused key that no counter could see. Alert on the **derivative**, not the value.
+
+### `flush() -> None`
+
+Flush the Langfuse batch now. For processes that exit right after the work (subprocess steps, CLI jobs), whose pending batch is otherwise lost. No-op when disabled; a failure is counted, never raised.
+
+### `mint_boundary_ids(trace_seed=None)` / `boundary_parent(ids, *, mapping=None, values=None)` / `emit_boundary(mapping, values, *, ids, name, timing)`
+
+The replay-safe entry boundary for a journaled step of a durable-execution runtime. Mint the identity inside the journaled step, make it a non-recording ambient parent (exports nothing, so a replay cannot double), and export the boundary span once from inside a journaled step. `boundary_parent` also propagates the mapped user/session/tags/metadata to children when given `mapping` and `values`. **Call `emit_boundary` exactly once**: on v4 a second call with the same id produces a duplicate. Full recipe and failure modes: [docs/durable-execution.md](docs/durable-execution.md).
+
+### Langfuse v4 notes
+
+- **OTLP does not upsert.** Re-exporting a span id yields a duplicate observation (the legacy ingestion API upserted; v4 removed it). Idempotence now rests on "called once, inside the journaled step".
+- **Trace attributes propagate to children.** v4 filters on per-span user/session/tags/metadata. `observed_trace` and `boundary_parent` stamp them on every child opened inside (values must be ASCII and at most 200 characters; others are left off the children and stay on the entry span). `trace_name` is deliberately not propagated, since joined services would each claim a different one.
+- **A joined `observed_trace` entry has a phantom parent.** With a seeded trace id and no parent, the SDK gives the entry span a random remote parent span id that is never exported. A waterfall reader must treat "parent not in trace" as a root.
+- Requires `langfuse>=4.7.0` (older SDKs land data up to 15 minutes late on v4).
 
 ---
 

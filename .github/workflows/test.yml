@@ -87,7 +87,8 @@ jobs:
           documented = {"Mapping","ScoreSpec","load_mapping","KNOWN_SLOTS",
                         "KNOWN_SCORE_ENCODINGS","set_trace_standard","observed_trace",
                         "emit_misses","span_descriptor","litellm_metadata",
-                        "observe_span","traced","redact"}
+                        "observe_span","traced","redact","flush","mint_boundary_ids",
+                        "boundary_parent","emit_boundary"}
           missing = sorted(n for n in documented if not hasattr(pt, n))
           assert not missing, f"public surface lost: {missing}"
           extra = sorted(set(pt.__all__) - documented)
