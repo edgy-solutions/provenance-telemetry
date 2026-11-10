@@ -257,7 +257,10 @@ def test_observed_trace_propagates_and_drops_bad_values(mem):
     spans = {s.name: s for s in spans_of(client, exp)}
     child = spans["child"].attributes
     assert child[USER] == "u1" and child[SESSION] == "s1"
-    assert child["langfuse.trace.metadata.good"] == "ok"
+    # The SDK owns the wire encoding: 4.x stores the bare string, 5.x JSON-encodes it.
+    # Assert the value, not one SDK's encoding of it.
+    raw = child["langfuse.trace.metadata.good"]
+    assert raw in ("ok", '"ok"')
     assert "langfuse.trace.metadata.long" not in child
     assert "langfuse.trace.metadata.uni" not in child
     # still on the entry span via set_trace_standard
