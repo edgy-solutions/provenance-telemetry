@@ -192,6 +192,35 @@ def test_witness_install_twice_does_not_double_count(monkeypatch):
     assert emit_misses() == before + 2
 
 
+def test_witness_concurrent_install_does_not_double_count(monkeypatch):
+    # Two threads hold the check-then-wrap window open at once: the barrier lets both
+    # through only if nothing serialises them, and then both would wrap the exporter.
+    import threading
+
+    exp = FailingExporter()
+    client = make_client(monkeypatch, exp)
+    real_wrap = emit_mod._wrap_exporter
+    barrier = threading.Barrier(2)
+
+    def slow_wrap(exporter):
+        try:
+            barrier.wait(timeout=0.5)
+        except threading.BrokenBarrierError:
+            pass
+        real_wrap(exporter)
+
+    monkeypatch.setattr(emit_mod, "_wrap_exporter", slow_wrap)
+    threads = [threading.Thread(target=emit_mod._install_export_witness, args=(client,))
+               for _ in range(2)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    before = emit_misses()
+    _emit_n(client, 2)
+    assert emit_misses() == before + 2
+
+
 def test_control_without_witness_counter_is_flat(monkeypatch):
     exp = FailingExporter()
     client = make_client(monkeypatch, exp)

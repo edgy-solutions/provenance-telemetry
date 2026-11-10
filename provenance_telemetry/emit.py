@@ -38,6 +38,9 @@ logger = logging.getLogger("provenance_telemetry")
 _misses = {"count": 0}
 _misses_lock = threading.Lock()
 _warned_no_witness = {"done": False}
+# Serialises check-then-wrap: two threads installing at once would wrap one exporter
+# twice and count every lost span double.
+_witness_lock = threading.Lock()
 
 
 def emit_misses() -> int:
@@ -96,14 +99,15 @@ def _install_export_witness(client: Any) -> None:
                 "exports will NOT be counted by emit_misses()"
             )
         return
-    for proc in procs:
-        try:
-            exporter = getattr(proc, "span_exporter", None)
-            if exporter is None or getattr(exporter, "_pt_witness", False):
-                continue
-            _wrap_exporter(exporter)
-        except Exception:  # noqa: BLE001
-            logger.warning("provenance-telemetry: could not wrap an exporter", exc_info=True)
+    with _witness_lock:
+        for proc in procs:
+            try:
+                exporter = getattr(proc, "span_exporter", None)
+                if exporter is None or getattr(exporter, "_pt_witness", False):
+                    continue
+                _wrap_exporter(exporter)
+            except Exception:  # noqa: BLE001
+                logger.warning("provenance-telemetry: could not wrap an exporter", exc_info=True)
 
 
 def _enabled() -> bool:
