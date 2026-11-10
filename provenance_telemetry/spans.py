@@ -70,7 +70,10 @@ def observe_span(operation: str, **attributes: Any) -> Iterator[Dict[str, Any]]:
         return
     try:
         from langfuse import get_client
-        cm = get_client().start_as_current_observation(name=operation, as_type="span")
+        from .emit import _install_export_witness
+        client = get_client()
+        _install_export_witness(client)
+        cm = client.start_as_current_observation(name=operation, as_type="span")
     except Exception as exc:  # noqa: BLE001 — telemetry never blocks the work
         from .emit import _miss
         _miss(f"observe_span setup failed: {exc}")
