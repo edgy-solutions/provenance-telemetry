@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import datetime
 import logging
-import os
 import secrets
 from contextlib import ExitStack, contextmanager
 from typing import Any, Dict, Iterator, Optional
@@ -153,9 +152,12 @@ def emit_boundary(mapping: Any, values: Dict[str, Any], *, ids: Dict[str, Any],
         )
         attrs: Dict[str, Any] = {A.OBSERVATION_TYPE: "span", A.TRACE_NAME: name}
         attrs.update(_trace_attributes(mapping, values))
-        env = os.getenv("DEPLOY_ENV")
-        if env:
-            attrs[A.ENVIRONMENT] = env
+        # One source with every SDK-built span (its children): the client's environment
+        # (LANGFUSE_TRACING_ENVIRONMENT) and release, so boundary and children cannot differ.
+        if getattr(client, "_environment", None):
+            attrs[A.ENVIRONMENT] = client._environment
+        if getattr(client, "_release", None):
+            attrs[A.RELEASE] = client._release
 
         started = timing.get("started_at") or _utcnow()
         ended = timing.get("ended_at") or _utcnow()

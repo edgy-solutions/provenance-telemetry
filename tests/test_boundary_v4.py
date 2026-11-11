@@ -133,6 +133,26 @@ def test_children_parent_to_boundary_and_boundary_exports_nothing(mem):
     assert c.attributes[USER] == "svc:a" and c.attributes[SESSION] == "s-1"
 
 
+# 3b ------------------------------- one environment for the boundary and its child
+def test_boundary_and_child_report_the_same_environment_and_release(monkeypatch):
+    """One source: the SDK's own setting. A conflicting DEPLOY_ENV must not split them."""
+    monkeypatch.setenv("LANGFUSE_TRACING_ENVIRONMENT", "env-one")
+    monkeypatch.setenv("LANGFUSE_RELEASE", "rel-one")
+    exp = InMemorySpanExporter()
+    client = make_client(monkeypatch, exp)
+    monkeypatch.setenv("DEPLOY_ENV", "env-other")  # make_client clears it; set it after
+    ids = mint_boundary_ids("upstream-1")
+    with boundary_parent(ids, mapping=MAPPING, values=VALUES) as timing:
+        with observe_span("leaf"):
+            pass
+    emit_boundary(MAPPING, VALUES, ids=ids, name="analyze", timing=timing)
+    spans = {s.name: s for s in spans_of(client, exp)}
+    leaf, boundary = spans["leaf"], spans["analyze"]
+    for key, want in (("langfuse.environment", "env-one"), ("langfuse.release", "rel-one")):
+        assert leaf.attributes.get(key) == want, key  # control: the SDK stamps the child
+        assert boundary.attributes.get(key) == want, key
+
+
 # 4 ------------------------------------------------------------ replay shape
 def test_replay_shape(mem):
     client, exp = mem
