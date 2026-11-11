@@ -10,13 +10,13 @@
 
 ```toml
 # pyproject.toml — from PyPI (preferred)
-dependencies = ["provenance-telemetry>=0.2.0,<0.3"]
+dependencies = ["provenance-telemetry>=0.2.1,<0.3"]
 ```
 
 ```toml
 # pyproject.toml — direct from git, pinned to a TAG (pre-index form)
 dependencies = [
-  "provenance-telemetry @ git+https://github.com/edgy-solutions/provenance-telemetry.git@v0.2.0",
+  "provenance-telemetry @ git+https://github.com/edgy-solutions/provenance-telemetry.git@v0.2.1",
 ]
 ```
 
@@ -90,9 +90,9 @@ Accepts a path or a dict. **Shape-validated at load**: an unknown Langfuse slot 
 
 Two-tier validation is deliberate. This library validates **shape** — `KNOWN_SLOTS` (`trace_id`, `user_id`, `session_id`, `release`, `version`) and `KNOWN_SCORE_ENCODINGS` (`ordinal`, `fraction`, `binary_per_join`, `count_total`) are closed sets. It does **not** validate that the provenance field names on the right-hand side exist — that is **truth**, and it belongs with whoever owns the vocabulary. Add a CI check in *your* repo asserting your mapping's field names exist in your contracts; that is the half this library cannot do for you, and skipping it is how a mapping quietly projects `None` forever.
 
-### `observed_trace(mapping, values, *, name="operation", as_type="span")`
+### `observed_trace(mapping, values, *, name="operation", as_type="span", parent_span_id=None)`
 
-Context manager. **The entry primitive** — opens or *joins* a trace on the mapped `trace_id`, then enriches it. Everything opened inside nests under it via the ordinary OTel context.
+Context manager. **The entry primitive** — opens or *joins* a trace on the mapped `trace_id`, then enriches it. Everything opened inside nests under it via the ordinary OTel context. A caller that knows its own span passes `parent_span_id` (keyword-only, 16 hex chars) so the parent id travels with the trace id; with none, the entry is a root.
 
 ### `set_trace_standard(mapping, values)`
 
@@ -152,7 +152,7 @@ The replay-safe entry boundary for a journaled step of a durable-execution runti
 
 - **OTLP does not upsert.** Re-exporting a span id yields a duplicate observation (the legacy ingestion API upserted; v4 removed it). Idempotence now rests on "called once, inside the journaled step".
 - **Trace attributes propagate to children.** v4 filters on per-span user/session/tags/metadata. `observed_trace` and `boundary_parent` stamp them on every child opened inside (values must be ASCII and at most 200 characters; others are left off the children and stay on the entry span). `trace_name` is deliberately not propagated, since joined services would each claim a different one.
-- **A joined `observed_trace` entry has a phantom parent.** With a seeded trace id and no parent, the SDK gives the entry span a random remote parent span id that is never exported. A waterfall reader must treat "parent not in trace" as a root.
+- **A joined `observed_trace` entry is a root unless its parent is known.** With a seeded trace id and no parent, the entry span has NO parent (it is a root); the library never invents one. A caller that knows its own span passes `parent_span_id` (16 hex chars) and it travels with the trace id; an ambient span of the same trace is used the same way. An invalid `parent_span_id`, or one with no trace id, counts one miss and is ignored.
 - Requires `langfuse>=4.7.0` (older SDKs land data up to 15 minutes late on v4).
 
 ---
