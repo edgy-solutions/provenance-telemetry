@@ -289,12 +289,19 @@ def _root_entry_cm(client: Any, tid: str, name: str, as_type: str) -> Any:
         is_remote=False,
         trace_flags=TraceFlags(TraceFlags.SAMPLED),
     )
+    # The SDK's span wrapper stamps environment and release on every span it opens; the
+    # children of this entry get them, so the entry must too, from the same client fields.
+    attrs: Dict[str, Any] = {A.OBSERVATION_TYPE: as_type}
+    if getattr(client, "_environment", None):
+        attrs[A.ENVIRONMENT] = client._environment
+    if getattr(client, "_release", None):
+        attrs[A.RELEASE] = client._release
     span = Span(
         name,
         ctx,
         parent=None,
         resource=tracer.resource,
-        attributes={A.OBSERVATION_TYPE: as_type},
+        attributes=attrs,
         span_processor=tracer.span_processor,
         instrumentation_scope=tracer._instrumentation_scope,
     )

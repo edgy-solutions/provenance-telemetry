@@ -70,6 +70,22 @@ def test_case_d_seed_no_parent_is_root(mem):
     assert emit_misses() == before
 
 
+def test_case_d_root_carries_the_environment_and_release_its_children_carry(monkeypatch):
+    """The hand-built root must land in the same Langfuse environment as the SDK-built child."""
+    monkeypatch.setenv("LANGFUSE_TRACING_ENVIRONMENT", "env-ep")
+    monkeypatch.setenv("LANGFUSE_RELEASE", "rel-ep")
+    exp = InMemorySpanExporter()
+    client = make_client(monkeypatch, exp)
+    with observed_trace(MAPPING, VALUES, name="entry"):
+        with observe_span("child"):
+            pass
+    spans = spans_of(client, exp)
+    entry, child = by_name(spans, "entry"), by_name(spans, "child")
+    for key, want in (("langfuse.environment", "env-ep"), ("langfuse.release", "rel-ep")):
+        assert child.attributes.get(key) == want, key  # control: the SDK stamps it
+        assert entry.attributes.get(key) == want, key
+
+
 def test_control_for_d_sdk_path_invents_a_parent(mem):
     """The detector can see a phantom parent: the OLD call shape exports one."""
     client, exp = mem
