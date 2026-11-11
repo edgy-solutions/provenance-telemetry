@@ -5,7 +5,7 @@
 # consumers pinning the old name broke, since a rename of one namespace is
 # invisible to code that only ever types the other.
 name = "provenance-telemetry"
-version = "0.2.0"
+version = "0.2.1"
 description = "Project an existing provenance doctrine into an observability backend. Vocabulary is config, not code."
 readme = "README.md"
 # RAISED from ">=3.9" (2026-08-07) — that floor was FALSE, not merely untested.

@@ -26,7 +26,7 @@ import logging
 import os
 import threading
 from contextlib import ExitStack, contextmanager
-from typing import Any, Dict, Iterator
+from typing import Any, Dict, Iterator, Optional
 
 from .mapping import Mapping
 from .redact import redact
@@ -253,9 +253,58 @@ def set_trace_standard(mapping: Mapping, values: Dict[str, Any]) -> None:
         _miss(f"emit failed: {exc}")
 
 
+def _valid_span_id(value: Any) -> bool:
+    """16 hex chars, not all zeros (an OTel span id in its text form)."""
+    if not isinstance(value, str) or len(value) != 16:
+        return False
+    try:
+        return int(value, 16) != 0
+    except ValueError:
+        return False
+
+
+def _root_entry_cm(client: Any, tid: str, name: str, as_type: str) -> Any:
+    """A context manager that opens a PARENTLESS span on trace ``tid`` and makes it current.
+
+    The SDK cannot start a root with a chosen trace id through its public API (it invents a
+    remote parent), and the global id generator must not be swapped, so, as in
+    ``emit_boundary``, the span is built by hand on the SDK tracer's own scope.
+    ``use_span`` ends it and records an exception from the body as ERROR.
+    """
+    import secrets
+    from langfuse import LangfuseOtelSpanAttributes as A
+    try:  # newer OTel SDKs made ``Span`` abstract; the concrete class is ``_Span``
+        from opentelemetry.sdk.trace import _Span as Span
+    except ImportError:
+        from opentelemetry.sdk.trace import Span
+    from opentelemetry.trace import SpanContext, TraceFlags, use_span
+
+    tracer = client._otel_tracer
+    span_id = 0
+    while span_id == 0:
+        span_id = secrets.randbits(64)
+    ctx = SpanContext(
+        trace_id=int(tid, 16),
+        span_id=span_id,
+        is_remote=False,
+        trace_flags=TraceFlags(TraceFlags.SAMPLED),
+    )
+    span = Span(
+        name,
+        ctx,
+        parent=None,
+        resource=tracer.resource,
+        attributes={A.OBSERVATION_TYPE: as_type},
+        span_processor=tracer.span_processor,
+        instrumentation_scope=tracer._instrumentation_scope,
+    )
+    span.start()
+    return use_span(span, end_on_exit=True)
+
+
 @contextmanager
 def observed_trace(mapping: Mapping, values: Dict[str, Any], *, name: str = "operation",
-                   as_type: str = "span") -> Iterator[None]:
+                   as_type: str = "span", parent_span_id: Optional[str] = None) -> Iterator[None]:
     """Open (or JOIN) a trace keyed on the mapping's ``trace_id`` and enrich it (langfuse v4).
 
     The v4-native entry primitive: derives a deterministic langfuse trace id from the
@@ -265,8 +314,10 @@ def observed_trace(mapping: Mapping, values: Dict[str, Any], *, name: str = "ope
     and carries the propagated user/session/tags/metadata (v4 filters on them per span).
     Fail-soft: on any setup error the body still runs, untraced.
 
-    Note: a joined entry (seed given, no parent) gets a random phantom remote parent span id
-    from the SDK; a waterfall reader must treat "parent not in trace" as a root.
+    Parent: ``parent_span_id`` (16 hex) is the caller's own span id, sent with the trace id.
+    Seeded with none, the entry nests under an ambient span of the same trace, else it is
+    a ROOT (no parent is invented). An invalid ``parent_span_id``, or one with no seed, counts
+    one miss and is ignored. Without a seed the SDK decides (ambient span, else a new root).
     """
     if not _enabled():
         yield
@@ -279,10 +330,31 @@ def observed_trace(mapping: Mapping, values: Dict[str, Any], *, name: str = "ope
         tid_field = mapping.slots.get("trace_id")
         if tid_field is not None and values.get(tid_field) is not None:
             seed = str(values[tid_field])
-        trace_context = {"trace_id": client.create_trace_id(seed=seed)} if seed else None
-        cm = client.start_as_current_observation(
-            trace_context=trace_context, name=name, as_type=as_type
-        )
+        parent = parent_span_id
+        if parent is not None and not _valid_span_id(parent):
+            _miss(f"observed_trace: invalid parent_span_id {parent!r}, ignored")
+            parent = None
+        if parent is not None and not seed:
+            _miss("observed_trace: parent_span_id without a trace id, ignored")
+            parent = None
+        if not seed:
+            cm = client.start_as_current_observation(
+                trace_context=None, name=name, as_type=as_type
+            )
+        else:
+            tid = client.create_trace_id(seed=seed)
+            if parent is None:
+                from opentelemetry import trace as _otr
+                amb = _otr.get_current_span().get_span_context()
+                if amb.is_valid and amb.trace_id == int(tid, 16):
+                    parent = format(amb.span_id, "016x")
+            if parent is not None:
+                cm = client.start_as_current_observation(
+                    trace_context={"trace_id": tid, "parent_span_id": parent},
+                    name=name, as_type=as_type,
+                )
+            else:
+                cm = _root_entry_cm(client, tid, name, as_type)
     except Exception as exc:  # noqa: BLE001 — never block the work on telemetry setup
         _miss(f"observed_trace setup failed: {exc}")
         yield
