@@ -169,6 +169,28 @@ The replay-safe entry boundary for a journaled step of a durable-execution runti
 - **A joined `observed_trace` entry is a root unless its parent is known.** With a seeded trace id and no parent, the entry span has NO parent (it is a root); the library never invents one. A caller that knows its own span passes `parent_span_id` (16 hex chars) and it travels with the trace id; an ambient span of the same trace is used the same way. An invalid `parent_span_id`, or one with no trace id, counts one miss and is ignored.
 - Requires `langfuse>=4.7.0` (older SDKs land data up to 15 minutes late on v4).
 
+### Upgrading the Langfuse client
+
+The boundary, the root entry and the export witness reach into SDK internals, so a new
+`langfuse` or `opentelemetry-sdk` version can break them while every import still works.
+
+**The private names they use:**
+- from langfuse: `client._otel_tracer`, `client._environment` and `client._release`;
+- from opentelemetry-sdk: `_Span`, `tracer._instrumentation_scope` and the processor list `span_processor._span_processors`.
+
+**Before you widen the `langfuse` range or change a consumer's pin,** run the whole suite with the
+new version installed explicitly (`uv pip install "langfuse==X.Y.Z"`) and again at the floor
+(`langfuse==4.7.0`). CI tests only whatever version resolves.
+
+**The tests that exercise those names:**
+- `tests/test_boundary_v4.py`: the boundary span, the replay shape and the export witness;
+- `tests/test_entry_parent_v4.py`: the root entry and its environment and release;
+- `tests/test_fail_soft.py`.
+
+**Read the log as well as the result:** the warning "cannot locate the SDK span processors" means
+the witness has silently switched itself off, so `emit_misses()` would stop counting lost exports.
+A green run that logs it is not a pass.
+
 ---
 
 ## The mapping config (you supply this)
@@ -202,3 +224,12 @@ The field *names* on the right are yours. This library never names them in its s
 - **It will not refuse your work.** Every failure path is soft. If a trace *must* exist for compliance, that is a check you own; this library is a witness channel, not a gate.
 - **It does not own your vocabulary.** No provenance field name appears in this source, by design and by test.
 - **It does not verify your mapping is true** — only that it is well-shaped. See the two-tier split above.
+
+## Maintaining this repo
+
+- **Changes are recorded in [CHANGELOG.md](CHANGELOG.md).**
+- **A release** is an annotated `vX.Y.Z` tag on a green `master` commit. The tag must match the
+  packaged version, and CI publishes it to PyPI.
+- **Session files are never committed.** Maintainers keep local working notes (handoffs and
+  packets) in `sessions/`, which is gitignored. They are placed in a recipient's local
+  `sessions/` folder, never committed or pushed, and never force-added with `git add -f`.

@@ -27,10 +27,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Floor and ceiling of `requires-python = ">=3.10,<3.15"`, plus the
+        # Floor and ceiling of `requires-python = ">=3.10,<3.15"` (3.10 and 3.14), plus the
         # versions in between. If a future dependency bump raises the real floor,
         # the 3.10 leg fails HERE rather than in an adopter's install.
-        python: ["3.10", "3.11", "3.12", "3.13"]
+        python: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - name: Checkout

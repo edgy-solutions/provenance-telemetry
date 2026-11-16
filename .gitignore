@@ -5,3 +5,6 @@ dist/
 build/
 *.egg-info/
 .venv/
+
+# Maintainers' local session files (handoffs, packets): placed, never committed.
+sessions/
