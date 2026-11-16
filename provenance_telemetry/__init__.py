@@ -7,10 +7,11 @@ primitives for journaled steps of a durable-execution runtime.
 No vocabulary lives here — it lives in the mapping config the caller supplies.
 """
 from .mapping import Mapping, ScoreSpec, load_mapping, KNOWN_SLOTS, KNOWN_SCORE_ENCODINGS
-from .emit import set_trace_standard, observed_trace, emit_misses, flush
+from .emit import set_trace_standard, observed_trace, trace_id_for, emit_misses, flush
 from .boundary import mint_boundary_ids, boundary_parent, emit_boundary
 from .spans import span_descriptor, litellm_metadata, observe_span, traced
 from .redact import redact
+from .w3c import parse_traceparent, parse_tracestate, format_traceparent
 
 __all__ = [
     "Mapping",
@@ -30,4 +31,8 @@ __all__ = [
     "observe_span",
     "traced",
     "redact",
+    "trace_id_for",
+    "parse_traceparent",
+    "parse_tracestate",
+    "format_traceparent",
 ]
