@@ -67,7 +67,7 @@ async def analyze(req: Request, body: dict):
         return run(plan)
 ```
 
-**What makes this a join and not a new trace:** `observed_trace` reads the field your mapping puts in the `trace_id` slot (`request_key` above) and derives a deterministic Langfuse id from it via `create_trace_id(seed=...)`. Two services handed the **same** `X-Trace-Id` compute the **same** Langfuse trace id, so their spans land on **one** trace. The join is native, not a reconciliation step.
+**What makes this a join and not a new trace:** `observed_trace` reads the field your mapping puts in the `trace_id` slot (`request_key` above) and turns it into a Langfuse trace id with `trace_id_for(seed)`: a seed that is already a W3C trace-id (32 lowercase hex, not all zeros) is used verbatim, and any other seed is hashed deterministically via `create_trace_id(seed=...)`. Two services handed the **same** `X-Trace-Id` compute the **same** Langfuse trace id, so their spans land on **one** trace. The join is native, not a reconciliation step.
 
 If the seed field is absent, `observed_trace` opens a fresh trace instead — which is correct, but means **a caller that forgets the header silently gets an orphan trace rather than an error.** If joins are load-bearing for you, assert the header's presence in your own code; this library will not refuse the work to protect the telemetry.
 
@@ -119,6 +119,20 @@ litellm.completion(model="gpt-4o-mini", messages=msgs,
 ### `traced(name=None, as_type=None, *, capture_input=None, capture_output=None)`
 
 Decorator that opens a span/trace around a function. For a top-level entry that must open on a **chosen** id, use `observed_trace` — `traced` wraps Langfuse's `observe`, which mints its own id and therefore **cannot join**. See the decoration-time gating warning above.
+
+`capture_input` / `capture_output` are forwarded to `observe` only when set. Left as `None`, they defer to `LANGFUSE_OBSERVE_DECORATOR_IO_CAPTURE_ENABLED`. Pass `False` to keep a function's arguments or return value (for example, model text) out of the span.
+
+### `trace_id_for(seed) -> str | None`
+
+The trace id a seed names. A seed that is exactly a W3C trace-id (32 **lowercase** hex, not all zeros) is returned unchanged, so an inbound `traceparent` continues as the same trace. Any other non-empty seed is hashed by the Langfuse client, as before 0.2.2. `None` or `""` returns `None`. The verbatim branch needs no Langfuse client. `observed_trace` and `mint_boundary_ids` both seed through it.
+
+### `parse_traceparent(value)` / `parse_tracestate(value)` / `format_traceparent(trace_id, span_id, flags="01")`
+
+Pure W3C Trace Context helpers, with no Langfuse or OTel import. `value` is a header string or a list of them.
+
+- `parse_traceparent` returns `(trace_id, parent_id, flags)` or `None`. Version `00` must be exactly 55 characters, `ff` is invalid, ids must be lowercase and not all zeros, and a future version is read by its first 55 characters. More than one header is invalid.
+- `parse_tracestate` returns the normalised header or `None` (empty, malformed member, duplicate key, more than 32 members). Over 512 characters, members are dropped from the right. Use it only alongside a valid `traceparent`.
+- `format_traceparent` formats a version-`00` header.
 
 ### `redact(value) -> str`
 
