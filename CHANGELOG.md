@@ -10,6 +10,10 @@ No package change, so nothing to publish.
 - **CI runs Python 3.14.** The package has declared `<3.15` since 0.1.0, but the test matrix stopped at
   3.13, so the 3.14 claim had never been exercised.
 - **This file**, and a README section on what to re-test when the Langfuse client is upgraded.
+- **An ADR is cited with its repository.** The decisions behind this library are ADRs in another
+  repository, so a bare ADR number names nothing a reader can follow. The two bare cites (a
+  docstring in `mapping.py` and the example mapping's header) now name their repo, and a test
+  refuses any new bare one.
 - **`sessions/` is gitignored.** Session files are local working notes for the repo's
   maintainers. They are never committed.
 

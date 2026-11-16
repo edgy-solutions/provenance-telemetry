@@ -1,4 +1,4 @@
-# EXAMPLE mapping — illustrative only. The real mesh mapping ships as ADR-0036
+# EXAMPLE mapping — illustrative only. The real mesh mapping ships as edgy-solutions/invincible-agent ADR-0036
 # seed config IN THE MESH REPO, where a CI truth-check asserts every field name
 # below exists in the mesh's provenance contracts. The leaf validates only that
 # the left-hand slots/encodings are known; it never checks these names.

@@ -1,7 +1,7 @@
 """The ratifiable mapping config + its SHAPE validation.
 
-Two-tier validation, by design (ADR-0038): this library validates *shape* — the
-Langfuse slots and score encodings a mapping may target are a closed set, and an
+Two-tier validation, by design (edgy-solutions/invincible-agent ADR-0038): this
+library validates *shape* — the Langfuse slots and score encodings a mapping may target are a closed set, and an
 unknown one is refused at load. It deliberately does NOT validate that the
 provenance *field names* on the right-hand side exist — that is *truth*, and it
 belongs with whoever owns the vocabulary (a CI check in their own repo). That
