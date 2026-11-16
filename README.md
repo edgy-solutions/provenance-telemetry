@@ -10,13 +10,13 @@
 
 ```toml
 # pyproject.toml — from PyPI (preferred)
-dependencies = ["provenance-telemetry>=0.2.1,<0.3"]
+dependencies = ["provenance-telemetry>=0.2.2,<0.3"]
 ```
 
 ```toml
 # pyproject.toml — direct from git, pinned to a TAG (pre-index form)
 dependencies = [
-  "provenance-telemetry @ git+https://github.com/edgy-solutions/provenance-telemetry.git@v0.2.1",
+  "provenance-telemetry @ git+https://github.com/edgy-solutions/provenance-telemetry.git@v0.2.2",
 ]
 ```
 
@@ -116,7 +116,7 @@ litellm.completion(model="gpt-4o-mini", messages=msgs,
                                              session_id=sid, tags=["analyst"], domain=domain))
 ```
 
-### `traced(name=None, as_type=None)`
+### `traced(name=None, as_type=None, *, capture_input=None, capture_output=None)`
 
 Decorator that opens a span/trace around a function. For a top-level entry that must open on a **chosen** id, use `observed_trace` — `traced` wraps Langfuse's `observe`, which mints its own id and therefore **cannot join**. See the decoration-time gating warning above.
 

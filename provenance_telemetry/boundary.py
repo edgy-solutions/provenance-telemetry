@@ -22,7 +22,7 @@ from contextlib import ExitStack, contextmanager
 from typing import Any, Dict, Iterator, Optional
 
 from .emit import (
-    _enabled,
+    _enabled, trace_id_for,
     _enter_propagation,
     _install_export_witness,
     _miss,
@@ -52,9 +52,9 @@ def mint_boundary_ids(trace_seed: Optional[str] = None) -> Dict[str, Optional[st
     if _enabled():
         try:
             from langfuse import get_client
-            ids["trace_id"] = get_client().create_trace_id(
-                seed=str(trace_seed) if trace_seed else None
-            )
+            seed = str(trace_seed) if trace_seed else None
+            ids["trace_id"] = (trace_id_for(seed) if seed
+                               else get_client().create_trace_id(seed=None))
         except Exception as exc:  # noqa: BLE001 — telemetry never breaks the work
             _miss(f"mint_boundary_ids failed: {exc}")
             ids["trace_id"] = None

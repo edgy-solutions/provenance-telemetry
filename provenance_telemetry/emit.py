@@ -24,6 +24,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import threading
 from contextlib import ExitStack, contextmanager
 from typing import Any, Dict, Iterator, Optional
@@ -309,6 +310,22 @@ def _root_entry_cm(client: Any, tid: str, name: str, as_type: str) -> Any:
     return use_span(span, end_on_exit=True)
 
 
+_W3C_TRACE_ID = re.compile(r"[0-9a-f]{32}\Z")
+
+
+def trace_id_for(seed: Optional[str]) -> Optional[str]:
+    """The trace id a seed names. A seed that is exactly a W3C trace-id (32 LOWERCASE hex,
+    not all zeros) is returned unchanged; any other non-empty seed is hashed by the
+    Langfuse client, as before 0.2.2; None or empty returns None. The verbatim branch
+    needs no langfuse."""
+    if not seed:
+        return None
+    if _W3C_TRACE_ID.match(seed) and seed != "0" * 32:
+        return seed
+    from langfuse import get_client
+    return get_client().create_trace_id(seed=seed)
+
+
 @contextmanager
 def observed_trace(mapping: Mapping, values: Dict[str, Any], *, name: str = "operation",
                    as_type: str = "span", parent_span_id: Optional[str] = None) -> Iterator[None]:
@@ -349,7 +366,7 @@ def observed_trace(mapping: Mapping, values: Dict[str, Any], *, name: str = "ope
                 trace_context=None, name=name, as_type=as_type
             )
         else:
-            tid = client.create_trace_id(seed=seed)
+            tid = trace_id_for(seed)
             if parent is None:
                 from opentelemetry import trace as _otr
                 amb = _otr.get_current_span().get_span_context()

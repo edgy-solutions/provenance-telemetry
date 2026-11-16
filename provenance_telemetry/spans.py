@@ -89,13 +89,17 @@ def observe_span(operation: str, **attributes: Any) -> Iterator[Dict[str, Any]]:
         yield d
 
 
-def traced(name: Optional[str] = None, as_type: Optional[str] = None):
+def traced(name: Optional[str] = None, as_type: Optional[str] = None, *,
+           capture_input: Optional[bool] = None, capture_output: Optional[bool] = None):
     """Decorator that OPENS a Langfuse span/trace around the wrapped function (v4 ``observe``).
 
     For a top-level entry that must open on a CHOSEN trace id (a join), prefer
     ``observed_trace`` — ``@observe`` mints its own id. **Pass-through when Langfuse is
     disabled**, so no-creds code carries no runtime dependency. Gating is at decoration
     time, matching the deploy model where env is set before modules import.
+
+    ``capture_input`` / ``capture_output``: False keeps the function's arguments / return
+    value out of the observation; None defers to LANGFUSE_OBSERVE_DECORATOR_IO_CAPTURE_ENABLED.
     """
     def deco(fn):
         if not _enabled():
@@ -107,6 +111,10 @@ def traced(name: Optional[str] = None, as_type: Optional[str] = None):
                 kwargs["name"] = name
             if as_type is not None:
                 kwargs["as_type"] = as_type
+            if capture_input is not None:
+                kwargs["capture_input"] = capture_input
+            if capture_output is not None:
+                kwargs["capture_output"] = capture_output
             return observe(**kwargs)(fn)
         except Exception:  # noqa: BLE001 — SDK absent -> pass-through, never a crash
             return fn
