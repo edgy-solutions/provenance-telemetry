@@ -178,6 +178,10 @@ The boundary, the root entry and the export witness reach into SDK internals, so
 - from langfuse: `client._otel_tracer`, `client._environment` and `client._release`;
 - from opentelemetry-sdk: `_Span`, `tracer._instrumentation_scope` and the processor list `span_processor._span_processors`.
 
+**Server compatibility.** Client 4.x works against Langfuse servers from 3.63.0. Client 5.x needs a
+server on v4.59.0 or later. v3 servers receive patches until January 2027. This package therefore
+caps `langfuse<5`, and the forward-looking CI job tracks 5.x.
+
 **Before you widen the `langfuse` range or change a consumer's pin,** run the whole suite with the
 new version installed explicitly (`uv pip install "langfuse==X.Y.Z"`) and again at the floor
 (`langfuse==4.7.0`). CI tests only whatever version resolves.
