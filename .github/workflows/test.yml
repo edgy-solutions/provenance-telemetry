@@ -105,3 +105,38 @@ jobs:
           path: junit-${{ matrix.python }}.xml
           if-no-files-found: warn
           retention-days: 14
+
+  # Forward-looking, NOT supported yet. The client is capped below 5 (see pyproject.toml)
+  # because client 5 needs a Langfuse server on v4.59.0+, and the servers this package is
+  # used against may be older. This job installs 5.x anyway to show what would break. It may
+  # fail, and that does not block: it is allowed to fail (continue-on-error).
+  forward-langfuse-5:
+    name: "forward-looking: langfuse 5.x (not supported yet)"
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Create venv
+        run: uv venv --python 3.12
+
+      - name: Install package + dev extra
+        run: uv pip install -e ".[dev]"
+
+      - name: Force langfuse 5.x
+        run: uv pip install "langfuse>=5,<6"
+
+      - name: Show resolved langfuse version
+        run: uv pip list | grep -Ei "^langfuse" || true
+
+      - name: Run tests (telemetry disabled, forward leg)
+        env:
+          LANGFUSE_SECRET_KEY: ""
+          LANGFUSE_PUBLIC_KEY: ""
+          LANGFUSE_HOST: ""
+          PT_FORWARD_LANGFUSE: "1"
+        run: .venv/bin/python -m pytest tests -q --no-header -rs

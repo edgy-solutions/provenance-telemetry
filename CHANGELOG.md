@@ -5,8 +5,11 @@ Every release of `provenance-telemetry`, newest first. Each version is an annota
 
 ## Unreleased
 
-No package change, so nothing to publish.
+A package change: the next release is 0.2.3, tagged after this merges.
 
+- **Requires `langfuse>=4.7.0,<5`.** Client 5 needs a Langfuse server on v4.59.0 or later, and
+  self-hosted v3 servers are still supported until January 2027. A forward-looking CI job
+  (allowed to fail) tracks 5.x.
 - **CI runs Python 3.14.** The package has declared `<3.15` since 0.1.0, but the test matrix stopped at
   3.13, so the 3.14 claim had never been exercised.
 - **This file**, and a README section on what to re-test when the Langfuse client is upgraded.
