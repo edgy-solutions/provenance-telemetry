@@ -48,4 +48,4 @@ All paths are at `e84fd29a66c6207ae94131c78bb777e6ddfba3f6` unless the row names
 | SDK default: capture on | langfuse 4.18.0, `_client/observe.py:119`, `:196-198` | — | — | `built` |
 | Decoration-time gate; silent fallback | `spans.py:104-120`; `README.md`, section "Enabling it" | not stated | `test_traced.py`: `test_disabled_is_passthrough`, `test_enabled_still_runs_the_function` | `built` |
 | `observe_span` counts; `traced` does not | `spans.py:73-88`; `spans.py:119-120` | not stated | no test for either | `built` |
-| Consumer turns capture off | edgy-solutions/invincible-agent at `6b3e8ef`: `baml_shared/telemetry.py:26-30`, `:196-205` | not stated | — | `built` |
+| Consumer turns capture off | edgy-solutions/invincible-agent at `6b3e8ef`: `baml_shared/telemetry.py:27-31`, `:196-205` | not stated | — | `built` |
