@@ -50,14 +50,14 @@ All paths are at `e84fd29a66c6207ae94131c78bb777e6ddfba3f6` unless the row names
 
 | Claim | Source | Decision | Evidence | Status |
 |---|---|---|---|---|
-| No vocabulary in the library | `mapping.py:37-49`; `__init__.py:1-8` | not stated | `test_no_mesh_vocab.py`: `test_no_foreign_vocabulary_in_leaf_source` | `built` |
-| Two closed sets, refused at load | `mapping.py:18-34`, `:51-59` | not stated | `test_mapping_validation.py`: `test_valid_mapping_loads`, `test_unknown_slot_refused`, `test_unknown_score_encoding_refused` | `built` |
-| Unknown top-level key ignored | `mapping.py:37-49` (no extra-key rule) | not stated | no test | `built` |
-| Shape, not truth | `README.md`, section "Non-goals" | not stated | — | `built` |
-| File or dict; empty is valid; `version` unread | `mapping.py:44`, `:62-69` | not stated | `test_mapping_validation.py`: `test_valid_mapping_loads` | `built` |
-| Only projected fields are emitted | `emit.py:143-178`, `:185-208` | not stated | `test_boundary_v4.py`: `test_set_trace_standard_attributes_pinned` | `built` |
-| Hash, don't drop: `sha1:` and 16 hex | `redact.py:15-21` | not stated | `test_boundary_v4.py`: `test_set_trace_standard_attributes_pinned` (asserts a redacted metadata value equals `redact` of it) | `built` |
-| No key or salt | `redact.py:18-21` | not stated | — | `built` |
-| Applied to the projection only | `emit.py:143-147`, `:162`, `:169`, `:174`, `:195-203`; `boundary.py:154`; contrast `spans.py:27-32`, `:85` | not stated | `test_boundary_v4.py`: `test_set_trace_standard_attributes_pinned` | `built` |
-| Score encodings | `emit.py:136-140`, `:243-252` | not stated | no test reads a score value | `built` |
-| Consumer: no scores; truth check skips `content_bearing` | edgy-solutions/invincible-agent at `6b3e8ef`: `baml_shared/telemetry-mapping.yaml:5-20`; `tests/test_telemetry.py:75-88` | not stated | `tests/test_telemetry.py`: `test_mesh_mapping_truth_check` | `built` |
+| No vocabulary in the library | `mapping.py:37-49`; `__init__.py:1-8` | [ADR-0003](../decisions/ADR-0003-the-library-ships-no-vocabulary-and-the-caller-s-mapping-supplies-it.md) | `test_no_mesh_vocab.py`: `test_no_foreign_vocabulary_in_leaf_source` | `built` |
+| Two closed sets, refused at load | `mapping.py:18-34`, `:51-59` | [ADR-0004](../decisions/ADR-0004-validation-has-two-tiers-the-library-checks-shape-the-vocabulary-owner-checks-truth.md) | `test_mapping_validation.py`: `test_valid_mapping_loads`, `test_unknown_slot_refused`, `test_unknown_score_encoding_refused` | `built` |
+| Unknown top-level key ignored | `mapping.py:37-49` (no extra-key rule) | [ADR-0004](../decisions/ADR-0004-validation-has-two-tiers-the-library-checks-shape-the-vocabulary-owner-checks-truth.md) | no test | `built` |
+| Shape, not truth | `README.md`, section "Non-goals" | [ADR-0004](../decisions/ADR-0004-validation-has-two-tiers-the-library-checks-shape-the-vocabulary-owner-checks-truth.md) | — | `built` |
+| File or dict; empty is valid; `version` unread | `mapping.py:44`, `:62-69` | [ADR-0004](../decisions/ADR-0004-validation-has-two-tiers-the-library-checks-shape-the-vocabulary-owner-checks-truth.md) | `test_mapping_validation.py`: `test_valid_mapping_loads` | `built` |
+| Only projected fields are emitted | `emit.py:143-178`, `:185-208` | [ADR-0010](../decisions/ADR-0010-content-bearing-values-are-hashed-not-dropped.md) | `test_boundary_v4.py`: `test_set_trace_standard_attributes_pinned` | `built` |
+| Hash, don't drop: `sha1:` and 16 hex | `redact.py:15-21` | [ADR-0010](../decisions/ADR-0010-content-bearing-values-are-hashed-not-dropped.md) | `test_boundary_v4.py`: `test_set_trace_standard_attributes_pinned` (asserts a redacted metadata value equals `redact` of it) | `built` |
+| No key or salt | `redact.py:18-21` | [ADR-0010](../decisions/ADR-0010-content-bearing-values-are-hashed-not-dropped.md) | — | `built` |
+| Applied to the projection only | `emit.py:143-147`, `:162`, `:169`, `:174`, `:195-203`; `boundary.py:154`; contrast `spans.py:27-32`, `:85` | [ADR-0010](../decisions/ADR-0010-content-bearing-values-are-hashed-not-dropped.md) | `test_boundary_v4.py`: `test_set_trace_standard_attributes_pinned` | `built` |
+| Score encodings | `emit.py:136-140`, `:243-252` | [ADR-0004](../decisions/ADR-0004-validation-has-two-tiers-the-library-checks-shape-the-vocabulary-owner-checks-truth.md) | no test reads a score value | `built` |
+| Consumer: no scores; truth check skips `content_bearing` | edgy-solutions/invincible-agent at `6b3e8ef`: `baml_shared/telemetry-mapping.yaml:5-20`; `tests/test_telemetry.py:75-88` | [ADR-0004](../decisions/ADR-0004-validation-has-two-tiers-the-library-checks-shape-the-vocabulary-owner-checks-truth.md) | `tests/test_telemetry.py`: `test_mesh_mapping_truth_check` | `built` |
