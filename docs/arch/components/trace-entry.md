@@ -25,18 +25,18 @@ This record covers what the code provides by default, and what a caller may set.
 
 ## Connections
 
-One row per connection. Ids are those of [the README](../README.md#element-ids). Direction is one of: calls, is called by, reads, writes. Evidence paths are at the leaf pin, under `provenance_telemetry/`, unless the row says otherwise. Every connection here is inside the caller's process: the component opens no socket and signs in to nothing. The one authenticated hop, the SDK's export to XE-STORE, is the SDK's and is drawn in [FL-TRACE](../flows/agent-call-to-trace-store.md), step 19.
+One row per connection. Ids are those of [the README](../README.md#element-ids). Direction is one of: calls, is called by, reads, writes. Evidence paths are at the leaf pin, under `provenance_telemetry/`, unless the row says otherwise. Every connection here is inside the caller's process: the component opens no socket and signs in to nothing. The one authenticated hop, the SDK's export to XE-STORE, is the SDK's and is drawn in [FL-TRACE](../flows/agent-call-to-trace-store.md), step 19. Status is one of the four in [the status vocabulary](../README.md#status-vocabulary); every row here is `built`, and its evidence is the file and line at the leaf pin.
 
-| Other | Direction | Protocol | Authentication | What passes | Evidence |
-|---|---|---|---|---|---|
-| XE-CALLER | is called by | in-process Python call | none: same process | mapping, values, name, observation type, parent span id; W3C header strings, returned parsed or formatted | `__init__.py:10`, `:14`; `emit.py:222-254`, `:330-394`; `w3c.py:1-92` |
-| CO-MAPPING | calls | in-process Python call | none: same process | each projected field's value, for the token | `emit.py:143-147` |
-| CO-WITNESS | calls | in-process Python call | none: same process | the SDK client, to install the export witness; a miss and its reason | `emit.py:352`, `:359`, `:362`, `:383`, `:391` |
-| CO-BOUNDARY | is called by | in-process Python call | none: same process | a seed, returned as a trace id; mapping and values, returned as trace attributes or propagated to children | `boundary.py:24-30`, `:56`, `:102`, `:154` |
-| XE-ENV | reads | environment variable | none: same process | whether both keys are set | `emit.py:114-115` |
-| XE-SDK | calls | in-process Python call | none at the call; the SDK holds the keys | a span's name, type and trace context; mapped attributes; propagated attributes; scores; a seed to hash | `emit.py:214-217`, `:243-252`, `:267-310`, `:325-326`, `:350-381` |
-| XE-OTEL | reads | OpenTelemetry context, in process | none: same process | the current span, for `set_trace_standard` and for a same-trace parent | `emit.py:232-241`, `:371` |
-| XE-OTEL | writes | OpenTelemetry context, in process | none: same process | a hand-built root span, made current | `emit.py:281`, `:310` |
+| Other | Direction | Protocol | Authentication | What passes | Status | Evidence |
+|---|---|---|---|---|---|---|
+| XE-CALLER | is called by | in-process Python call | none: same process | mapping, values, name, observation type, parent span id; W3C header strings, returned parsed or formatted | `built` | `__init__.py:10`, `:14`; `emit.py:222-254`, `:330-394`; `w3c.py:1-92` |
+| CO-MAPPING | calls | in-process Python call | none: same process | each projected field's value, for the token | `built` | `emit.py:143-147` |
+| CO-WITNESS | calls | in-process Python call | none: same process | the SDK client, to install the export witness; a miss and its reason | `built` | `emit.py:352`, `:359`, `:362`, `:383`, `:391` |
+| CO-BOUNDARY | is called by | in-process Python call | none: same process | a seed, returned as a trace id; mapping and values, returned as trace attributes or propagated to children | `built` | `boundary.py:24-30`, `:56`, `:102`, `:154` |
+| XE-ENV | reads | environment variable | none: same process | whether both keys are set | `built` | `emit.py:114-115` |
+| XE-SDK | calls | in-process Python call | none at the call; the SDK holds the keys | a span's name, type and trace context; mapped attributes; propagated attributes; scores; a seed to hash | `built` | `emit.py:214-217`, `:243-252`, `:267-310`, `:325-326`, `:350-381` |
+| XE-OTEL | reads | OpenTelemetry context, in process | none: same process | the current span, for `set_trace_standard` and for a same-trace parent | `built` | `emit.py:232-241`, `:371` |
+| XE-OTEL | writes | OpenTelemetry context, in process | none: same process | a hand-built root span, made current | `built` | `emit.py:281`, `:310` |
 
 ## Settings and defaults
 

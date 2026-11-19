@@ -22,18 +22,18 @@ This record covers what the code provides by default, and what a caller may set.
 
 ## Connections
 
-One row per connection. Ids are those of [the README](../README.md#element-ids). Direction is one of: calls, is called by, reads, writes. Evidence paths are at the leaf pin, under `provenance_telemetry/`, unless the row says otherwise. Every connection here is inside the caller's process: the component opens no socket and signs in to nothing. The one authenticated hop, the SDK's export to XE-STORE, is the SDK's and is drawn in [FL-TRACE](../flows/agent-call-to-trace-store.md), step 19.
+One row per connection. Ids are those of [the README](../README.md#element-ids). Direction is one of: calls, is called by, reads, writes. Evidence paths are at the leaf pin, under `provenance_telemetry/`, unless the row says otherwise. Every connection here is inside the caller's process: the component opens no socket and signs in to nothing. The one authenticated hop, the SDK's export to XE-STORE, is the SDK's and is drawn in [FL-TRACE](../flows/agent-call-to-trace-store.md), step 19. Status is one of the four in [the status vocabulary](../README.md#status-vocabulary); every row here is `built`, and its evidence is the file and line at the leaf pin.
 
-| Other | Direction | Protocol | Authentication | What passes | Evidence |
-|---|---|---|---|---|---|
-| XE-CALLER | is called by | in-process Python call | none: same process | `emit_misses()`, returned as the count; `flush()` | `__init__.py:10`; `emit.py:47-58`, `:118-133` |
-| CO-ENTRY | is called by | in-process Python call | none: same process | the SDK client to wrap; a miss and its reason | `emit.py:352`, `:359`, `:362`, `:383`, `:391` |
-| CO-SPANS | is called by | in-process Python call | none: same process | the SDK client to wrap; a miss and its reason | `spans.py:73-79`, `:87-88` |
-| CO-BOUNDARY | is called by | in-process Python call | none: same process | the SDK client to wrap; a miss and its reason | `boundary.py:59`, `:104`, `:144`, `:177` |
-| XE-SDK | calls | in-process Python call, through the SDK's private tracer and processor list | none at the call; the SDK holds the keys | each exporter's `export`, replaced once by a counting wrapper; a flush request | `emit.py:85-111`, `:129-131` |
-| XE-SDK | is called by | in-process Python call, on the SDK's exporter thread | none: same process | each batch of spans, and the export's result or error | `emit.py:66-82` |
-| XE-ENV | reads | environment variable | none: same process | whether both keys are set | `emit.py:114-115` |
-| XE-LOG | writes | Python logging, logger `provenance_telemetry` | none: same process | one warning per miss, with its reason; one warning when the SDK's shape is absent | `emit.py:35`, `:63`, `:98-102`, `:111` |
+| Other | Direction | Protocol | Authentication | What passes | Status | Evidence |
+|---|---|---|---|---|---|---|
+| XE-CALLER | is called by | in-process Python call | none: same process | `emit_misses()`, returned as the count; `flush()` | `built` | `__init__.py:10`; `emit.py:47-58`, `:118-133` |
+| CO-ENTRY | is called by | in-process Python call | none: same process | the SDK client to wrap; a miss and its reason | `built` | `emit.py:352`, `:359`, `:362`, `:383`, `:391` |
+| CO-SPANS | is called by | in-process Python call | none: same process | the SDK client to wrap; a miss and its reason | `built` | `spans.py:73-79`, `:87-88` |
+| CO-BOUNDARY | is called by | in-process Python call | none: same process | the SDK client to wrap; a miss and its reason | `built` | `boundary.py:59`, `:104`, `:144`, `:177` |
+| XE-SDK | calls | in-process Python call, through the SDK's private tracer and processor list | none at the call; the SDK holds the keys | each exporter's `export`, replaced once by a counting wrapper; a flush request | `built` | `emit.py:85-111`, `:129-131` |
+| XE-SDK | is called by | in-process Python call, on the SDK's exporter thread | none: same process | each batch of spans, and the export's result or error | `built` | `emit.py:66-82` |
+| XE-ENV | reads | environment variable | none: same process | whether both keys are set | `built` | `emit.py:114-115` |
+| XE-LOG | writes | Python logging, logger `provenance_telemetry` | none: same process | one warning per miss, with its reason; one warning when the SDK's shape is absent | `built` | `emit.py:35`, `:63`, `:98-102`, `:111` |
 
 ## Settings and defaults
 

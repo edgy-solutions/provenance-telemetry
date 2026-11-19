@@ -19,16 +19,16 @@ This record covers what the code provides by default, and what a caller may set.
 
 ## Connections
 
-One row per connection. Ids are those of [the README](../README.md#element-ids). Direction is one of: calls, is called by, reads, writes. Evidence paths are at the leaf pin, under `provenance_telemetry/`, unless the row says otherwise. Every connection here is inside the caller's process: the component opens no socket and signs in to nothing. The one authenticated hop, the SDK's export to XE-STORE, is the SDK's and is drawn in [FL-TRACE](../flows/agent-call-to-trace-store.md), step 19.
+One row per connection. Ids are those of [the README](../README.md#element-ids). Direction is one of: calls, is called by, reads, writes. Evidence paths are at the leaf pin, under `provenance_telemetry/`, unless the row says otherwise. Every connection here is inside the caller's process: the component opens no socket and signs in to nothing. The one authenticated hop, the SDK's export to XE-STORE, is the SDK's and is drawn in [FL-TRACE](../flows/agent-call-to-trace-store.md), step 19. Status is one of the four in [the status vocabulary](../README.md#status-vocabulary); every row here is `built`, and its evidence is the file and line at the leaf pin.
 
-| Other | Direction | Protocol | Authentication | What passes | Evidence |
-|---|---|---|---|---|---|
-| XE-CALLER | is called by | in-process Python call | none: same process | a seed, returned as the ids to journal; ids, mapping and values; a name and the timing | `__init__.py:11`; `boundary.py:43-178` |
-| CO-ENTRY | calls | in-process Python call | none: same process | the seed, for a trace id; mapping and values, for trace attributes and for propagation to children | `boundary.py:24-30`, `:56`, `:102`, `:154` |
-| CO-WITNESS | calls | in-process Python call | none: same process | the SDK client, to install the export witness; a miss and its reason | `boundary.py:59`, `:104`, `:144`, `:177` |
-| XE-ENV | reads | environment variable, through CO-ENTRY's gate | none: same process | whether both keys are set | `boundary.py:25`, `:52`, `:83`, `:133` |
-| XE-OTEL | writes | OpenTelemetry context, in process | none: same process | a non-recording span with the journaled ids, attached as current and detached on exit | `boundary.py:85-97` |
-| XE-SDK | calls | in-process Python call, through the SDK tracer's private processor and scope | none at the call; the SDK holds the keys | a request for a trace id; a hand-built span with the ids, times, name, mapped fields, and the client's environment and release | `boundary.py:54-57`, `:143-174` |
+| Other | Direction | Protocol | Authentication | What passes | Status | Evidence |
+|---|---|---|---|---|---|---|
+| XE-CALLER | is called by | in-process Python call | none: same process | a seed, returned as the ids to journal; ids, mapping and values; a name and the timing | `built` | `__init__.py:11`; `boundary.py:43-178` |
+| CO-ENTRY | calls | in-process Python call | none: same process | the seed, for a trace id; mapping and values, for trace attributes and for propagation to children | `built` | `boundary.py:24-30`, `:56`, `:102`, `:154` |
+| CO-WITNESS | calls | in-process Python call | none: same process | the SDK client, to install the export witness; a miss and its reason | `built` | `boundary.py:59`, `:104`, `:144`, `:177` |
+| XE-ENV | reads | environment variable, through CO-ENTRY's gate | none: same process | whether both keys are set | `built` | `boundary.py:25`, `:52`, `:83`, `:133` |
+| XE-OTEL | writes | OpenTelemetry context, in process | none: same process | a non-recording span with the journaled ids, attached as current and detached on exit | `built` | `boundary.py:85-97` |
+| XE-SDK | calls | in-process Python call, through the SDK tracer's private processor and scope | none at the call; the SDK holds the keys | a request for a trace id; a hand-built span with the ids, times, name, mapped fields, and the client's environment and release | `built` | `boundary.py:54-57`, `:143-174` |
 
 ## Settings and defaults
 
