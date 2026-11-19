@@ -4,6 +4,13 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | [CO-SPANS](../components/span-carriers.md) |
+| flow | [FL-TRACE](../flows/agent-call-to-trace-store.md) |
+
 ## Decision
 
 A model call can be traced through an open span (`observe_span`) or through metadata for a LiteLLM proxy (`litellm_metadata`). Both build their name and attributes from one descriptor.
@@ -14,7 +21,7 @@ A trace reads the same whichever way the call was made.
 
 ## Consequences
 
-Carrier attributes are not redacted and do not consult the mapping ([span carriers](../components/span-carriers.md), findings 2 and 3).
+Carrier attributes are not redacted and do not consult the mapping ([CO-SPANS](../components/span-carriers.md), findings 2 and 3).
 
 ## Evidence
 

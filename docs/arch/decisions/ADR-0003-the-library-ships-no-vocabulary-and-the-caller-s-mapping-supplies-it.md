@@ -4,6 +4,13 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | [CO-MAPPING](../components/mapping-and-redaction.md) |
+| flow | none |
+
 ## Decision
 
 No provenance field name appears in the library's source. Which of the caller's fields fill which trace fields is a mapping the caller writes.

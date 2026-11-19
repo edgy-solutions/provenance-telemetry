@@ -4,6 +4,13 @@
 
 `built`. Enforced in the consumer, not this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | none |
+| flow | [FL-TRACE](../flows/agent-call-to-trace-store.md) |
+
 ## Decision
 
 The consumer read for these records keeps a shim that re-exports the library under its older names. It is removed once every consumer imports `provenance_telemetry` directly.

@@ -4,6 +4,15 @@
 
 `built`. Enforced in the consumer, not this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | none |
+| flow | none |
+
+No component or flow of these records: it governs a consumer's dependency pins.
+
 ## Decision
 
 The consumer read for these records pins the library in eight places, its root and seven services, and moves them together.

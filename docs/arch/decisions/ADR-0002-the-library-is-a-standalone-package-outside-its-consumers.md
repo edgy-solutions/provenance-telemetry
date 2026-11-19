@@ -4,6 +4,13 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | [CO-MAPPING](../components/mapping-and-redaction.md), [CO-ENTRY](../components/trace-entry.md), [CO-SPANS](../components/span-carriers.md), [CO-WITNESS](../components/emission-witness.md), [CO-BOUNDARY](../components/replay-safe-boundary.md) |
+| flow | none |
+
 ## Decision
 
 The library is its own repository and distribution. It imports nothing from any consumer and is named for what it does.

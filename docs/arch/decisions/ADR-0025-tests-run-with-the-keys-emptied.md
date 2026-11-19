@@ -4,6 +4,15 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | none |
+| flow | none |
+
+No component or flow of these records: it governs the repository's test practice.
+
 ## Decision
 
 CI runs the suite with `LANGFUSE_PUBLIC_KEY`, `LANGFUSE_SECRET_KEY` and `LANGFUSE_HOST` set empty.

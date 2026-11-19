@@ -4,6 +4,13 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | [CO-BOUNDARY](../components/replay-safe-boundary.md) |
+| flow | none |
+
 ## Decision
 
 Version 0.1.0 left the boundary to callers. Version 0.2.0 reverses that and ships it. Nothing in the library names a runtime.

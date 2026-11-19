@@ -4,6 +4,13 @@
 
 `accepted`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | [CO-MAPPING](../components/mapping-and-redaction.md), [CO-ENTRY](../components/trace-entry.md) |
+| flow | [FL-TRACE](../flows/agent-call-to-trace-store.md) |
+
 ## Decision
 
 A trace says what the caller's provenance record already says, in the caller's words. The trace id comes from an artifact key the caller supplies. It is never derived from model output.

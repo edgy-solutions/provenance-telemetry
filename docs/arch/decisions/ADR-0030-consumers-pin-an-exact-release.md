@@ -4,6 +4,15 @@
 
 `built`. Enforced in the consumer, not this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | none |
+| flow | none |
+
+No component or flow of these records: it governs a consumer's dependency pin.
+
 ## Decision
 
 A consumer pins the library with `==`, never a range or a floating git reference, so an upgrade arrives as a visible diff.

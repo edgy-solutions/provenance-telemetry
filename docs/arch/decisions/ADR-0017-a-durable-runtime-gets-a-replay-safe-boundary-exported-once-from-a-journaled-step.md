@@ -4,6 +4,13 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | [CO-BOUNDARY](../components/replay-safe-boundary.md) |
+| flow | [FL-TRACE](../flows/agent-call-to-trace-store.md) |
+
 ## Decision
 
 For a handler that a durable runtime replays, the library splits the entry in three: mint the ids inside a journaled step, make them a non-recording parent, and export the boundary span from another journaled step. Exporting it is the caller's job, exactly once.
@@ -14,7 +21,7 @@ An ordinary entry re-opens on each replay and shows one execution as several. On
 
 ## Consequences
 
-The residual case is an export that succeeds before its journal entry commits; the replay then exports a duplicate. The library names it and cannot prevent it ([replay-safe boundary](../components/replay-safe-boundary.md), finding 6).
+The residual case is an export that succeeds before its journal entry commits; the replay then exports a duplicate. The library names it and cannot prevent it ([CO-BOUNDARY](../components/replay-safe-boundary.md), finding 6).
 
 ## Evidence
 

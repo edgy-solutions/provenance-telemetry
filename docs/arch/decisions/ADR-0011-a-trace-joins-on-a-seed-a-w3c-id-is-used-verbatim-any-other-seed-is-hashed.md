@@ -4,6 +4,13 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | [CO-ENTRY](../components/trace-entry.md), [CO-BOUNDARY](../components/replay-safe-boundary.md) |
+| flow | [FL-TRACE](../flows/agent-call-to-trace-store.md) |
+
 ## Decision
 
 `observed_trace` and `trace_id_for` turn the caller's seed into the trace id. A seed that is already a W3C trace id is used unchanged; any other non-empty seed is hashed by the SDK. `set_trace_standard` writes onto the current span and cannot set the trace id.
@@ -14,7 +21,7 @@ Two services given the same seed land on the same trace without passing a trace 
 
 ## Consequences
 
-Two docstrings still describe the seed as always hashed ([trace entry](../components/trace-entry.md), finding 10).
+Two docstrings still describe the seed as always hashed ([CO-ENTRY](../components/trace-entry.md), finding 10).
 
 ## Evidence
 

@@ -4,6 +4,15 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | none |
+| flow | none |
+
+No component or flow of these records: it governs the repository's test matrix.
+
 ## Decision
 
 The package declares `>=3.10,<3.15`, and CI runs the suite on 3.10, 3.11, 3.12, 3.13 and 3.14.

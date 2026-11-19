@@ -4,6 +4,13 @@
 
 `built`. Enforced in the consumer, not this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | [CO-SPANS](../components/span-carriers.md) |
+| flow | [FL-TRACE](../flows/agent-call-to-trace-store.md) |
+
 ## Decision
 
 The consumer read for these records turns the SDK's input and output capture off before the SDK is imported, and its decorator wrapper forces both flags off. Its model-call wrapper records the model id and token counts, not text.

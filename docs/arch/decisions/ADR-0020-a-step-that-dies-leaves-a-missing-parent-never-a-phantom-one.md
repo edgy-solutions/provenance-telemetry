@@ -4,6 +4,13 @@
 
 `accepted`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | [CO-BOUNDARY](../components/replay-safe-boundary.md) |
+| flow | [FL-TRACE](../flows/agent-call-to-trace-store.md) |
+
 ## Decision
 
 If a durable handler dies before the boundary is exported, its children appear as roots on the right trace. The library never exports a boundary it cannot vouch for.
