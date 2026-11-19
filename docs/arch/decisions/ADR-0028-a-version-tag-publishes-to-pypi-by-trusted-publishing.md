@@ -4,6 +4,15 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | none |
+| flow | none |
+
+No component or flow of these records: it governs the release process.
+
 ## Decision
 
 A `v*` tag builds the package. The job checks that the tag equals the packaged version, installs the wheel in a clean environment and imports it, attaches it to a GitHub Release, and publishes to PyPI through OIDC from the `pypi` environment. A failure fails the job; nothing is skipped.

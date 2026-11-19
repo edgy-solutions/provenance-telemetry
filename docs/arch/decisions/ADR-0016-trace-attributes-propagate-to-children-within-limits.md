@@ -4,6 +4,13 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | [CO-ENTRY](../components/trace-entry.md), [CO-BOUNDARY](../components/replay-safe-boundary.md) |
+| flow | [FL-TRACE](../flows/agent-call-to-trace-store.md) |
+
 ## Decision
 
 Inside an entry, the mapped person, session, version, tags and metadata are passed to every child span. Values that are not ASCII or are over 200 characters stay on the entry only. Release and the trace name are not passed.
@@ -14,7 +21,7 @@ Queries by person or session find child spans too (0.2.0, commit `3f0eed8`). The
 
 ## Consequences
 
-When a mapping fills `release`, the entry and its children can report different releases ([trace entry](../components/trace-entry.md), finding 7).
+When a mapping fills `release`, the entry and its children can report different releases ([CO-ENTRY](../components/trace-entry.md), finding 7).
 
 ## Evidence
 

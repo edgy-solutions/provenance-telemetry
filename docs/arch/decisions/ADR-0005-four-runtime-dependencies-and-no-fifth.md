@@ -4,6 +4,13 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | [CO-MAPPING](../components/mapping-and-redaction.md), [CO-ENTRY](../components/trace-entry.md), [CO-SPANS](../components/span-carriers.md), [CO-WITNESS](../components/emission-witness.md), [CO-BOUNDARY](../components/replay-safe-boundary.md) |
+| flow | none |
+
 ## Decision
 
 The package depends on `langfuse`, `opentelemetry-api`, `pydantic` and `pyyaml`, and on nothing else. `opentelemetry-sdk` is imported inside fail-soft blocks and arrives through `langfuse`; it is deliberately not declared.

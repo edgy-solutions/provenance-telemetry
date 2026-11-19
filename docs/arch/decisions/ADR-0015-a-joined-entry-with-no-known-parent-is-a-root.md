@@ -4,6 +4,13 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | [CO-ENTRY](../components/trace-entry.md) |
+| flow | [FL-TRACE](../flows/agent-call-to-trace-store.md) |
+
 ## Decision
 
 An entry on a seeded trace with no parent passed, and no current span of that trace, has no parent: it is the trace's root. A parent span id must be 16 hex characters and not all zeros; anything else is counted and dropped.
@@ -14,7 +21,7 @@ Left to itself the SDK would invent a parent that was never exported (0.2.1, com
 
 ## Consequences
 
-A caller that sends the trace id without the parent loses the link to its own span; the entry is still on the right trace ([trace entry](../components/trace-entry.md), "Not established from code").
+A caller that sends the trace id without the parent loses the link to its own span; the entry is still on the right trace ([CO-ENTRY](../components/trace-entry.md), "Not established from code").
 
 ## Evidence
 

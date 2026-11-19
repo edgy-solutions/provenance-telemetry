@@ -20,6 +20,21 @@ This record covers what the code provides by default, and what a caller may set.
 10. **A caller cannot count its own miss through the public surface.** The counting function is private. The consumer read for these records imports it by its private name, so a consumer's soft failures can join the same counter. `built`
 11. **The outage test reaches the missing-SDK branch, not an outage.** `test_langfuse_outage_is_soft_and_counted` replaces the SDK with a module shaped like a much older SDK. The current code then fails to import the client and counts that as "unavailable". A server that refuses is exercised instead by the witness tests, which give the real SDK an exporter that fails. `built`
 
+## Connections
+
+One row per connection. Ids are those of [the README](../README.md#element-ids). Direction is one of: calls, is called by, reads, writes. Evidence paths are at the leaf pin, under `provenance_telemetry/`, unless the row says otherwise. Every connection here is inside the caller's process: the component opens no socket and signs in to nothing. The one authenticated hop, the SDK's export to XE-STORE, is the SDK's and is drawn in [FL-TRACE](../flows/agent-call-to-trace-store.md), step 19.
+
+| Other | Direction | Protocol | Authentication | What passes | Evidence |
+|---|---|---|---|---|---|
+| XE-CALLER | is called by | in-process Python call | none: same process | `emit_misses()`, returned as the count; `flush()` | `__init__.py:10`; `emit.py:47-58`, `:118-133` |
+| CO-ENTRY | is called by | in-process Python call | none: same process | the SDK client to wrap; a miss and its reason | `emit.py:352`, `:359`, `:362`, `:383`, `:391` |
+| CO-SPANS | is called by | in-process Python call | none: same process | the SDK client to wrap; a miss and its reason | `spans.py:73-79`, `:87-88` |
+| CO-BOUNDARY | is called by | in-process Python call | none: same process | the SDK client to wrap; a miss and its reason | `boundary.py:59`, `:104`, `:144`, `:177` |
+| XE-SDK | calls | in-process Python call, through the SDK's private tracer and processor list | none at the call; the SDK holds the keys | each exporter's `export`, replaced once by a counting wrapper; a flush request | `emit.py:85-111`, `:129-131` |
+| XE-SDK | is called by | in-process Python call, on the SDK's exporter thread | none: same process | each batch of spans, and the export's result or error | `emit.py:66-82` |
+| XE-ENV | reads | environment variable | none: same process | whether both keys are set | `emit.py:114-115` |
+| XE-LOG | writes | Python logging, logger `provenance_telemetry` | none: same process | one warning per miss, with its reason; one warning when the SDK's shape is absent | `emit.py:35`, `:63`, `:98-102`, `:111` |
+
 ## Settings and defaults
 
 | Setting | Code default | What it does |

@@ -4,6 +4,13 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | [CO-ENTRY](../components/trace-entry.md) |
+| flow | [FL-TRACE](../flows/agent-call-to-trace-store.md) |
+
 ## Decision
 
 The library parses and formats `traceparent` and parses `tracestate`. It reads and writes no HTTP headers.
@@ -14,7 +21,7 @@ The caller owns its transport. Pure helpers let any caller hand a received heade
 
 ## Consequences
 
-Whether a parent span id travels between services is each caller's choice. The consumer read for these records drops it at four receivers ([the flow record](../flows/agent-call-to-trace-store.md), finding 4).
+Whether a parent span id travels between services is each caller's choice. The consumer read for these records drops it at four receivers ([FL-TRACE](../flows/agent-call-to-trace-store.md), finding 4).
 
 ## Evidence
 

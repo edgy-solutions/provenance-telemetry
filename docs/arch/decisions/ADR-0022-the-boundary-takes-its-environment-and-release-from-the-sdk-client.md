@@ -4,6 +4,13 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | [CO-BOUNDARY](../components/replay-safe-boundary.md) |
+| flow | none |
+
 ## Decision
 
 The boundary span's environment and release are the SDK client's, from `LANGFUSE_TRACING_ENVIRONMENT` and the SDK's release settings, as on every span the SDK builds. `DEPLOY_ENV` is no longer read.
@@ -14,7 +21,7 @@ A parent and its children must not report different environments (0.2.1, commit 
 
 ## Consequences
 
-This was a breaking change for a deployment that set only `DEPLOY_ENV`. On the boundary the client's release wins over a mapped one; on an ordinary entry the mapped one wins ([trace entry](../components/trace-entry.md), finding 7).
+This was a breaking change for a deployment that set only `DEPLOY_ENV`. On the boundary the client's release wins over a mapped one; on an ordinary entry the mapped one wins ([CO-ENTRY](../components/trace-entry.md), finding 7).
 
 ## Evidence
 

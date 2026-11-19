@@ -1,6 +1,6 @@
 # Replay-safe boundary (CO-BOUNDARY)
 
-The replay-safe boundary is an entry for a handler run by a durable-execution runtime. Such a runtime re-runs a handler from the top on replay, and hands back recorded results only for the steps it journaled. An ordinary entry ([trace entry](trace-entry.md)) re-runs too, and mints a new span each time, so one execution shows as several entries. The boundary splits the entry into three calls. The first mints the boundary's ids inside a journaled step, so a replay gets the same ids. The second makes those ids the parent of everything inside without exporting anything, so a replay cannot add a span. The third exports the boundary span itself, once, from another journaled step. The library names no runtime; its one worked example is in `docs/durable-execution.md`.
+The replay-safe boundary is an entry for a handler run by a durable-execution runtime. Such a runtime re-runs a handler from the top on replay, and hands back recorded results only for the steps it journaled. An ordinary entry ([CO-ENTRY](trace-entry.md)) re-runs too, and mints a new span each time, so one execution shows as several entries. The boundary splits the entry into three calls. The first mints the boundary's ids inside a journaled step, so a replay gets the same ids. The second makes those ids the parent of everything inside without exporting anything, so a replay cannot add a span. The third exports the boundary span itself, once, from another journaled step. The library names no runtime; its one worked example is in `docs/durable-execution.md`.
 
 This record covers what the code provides by default, and what a caller may set. It describes no particular caller, except where a row says which consumer it read.
 
@@ -8,14 +8,27 @@ This record covers what the code provides by default, and what a caller may set.
 
 ## Findings
 
-1. **`mint_boundary_ids` mints the pair to be journaled.** It always returns a fresh random 16-hex span id, even when tracing is off. The trace id is the seed's, by the rule of [trace entry](trace-entry.md), finding 3. With no seed it is a random id from the SDK. The trace id is none when tracing is off, or when minting fails, which counts one miss. The call is meant to run inside a journaled step; the library cannot check that it does. `built`
+1. **`mint_boundary_ids` mints the pair to be journaled.** It always returns a fresh random 16-hex span id, even when tracing is off. The trace id is the seed's, by the rule of [CO-ENTRY](trace-entry.md), finding 3. With no seed it is a random id from the SDK. The trace id is none when tracing is off, or when minting fails, which counts one miss. The call is meant to run inside a journaled step; the library cannot check that it does. `built`
 2. **`boundary_parent` makes the ids the parent of everything inside, and exports nothing.** It attaches a non-recording span with those ids, marked as remote, as the current span. Spans opened inside, by any carrier, nest under it through the ordinary context. Being non-recording, it exports nothing, so re-entering it on a replay adds nothing. Given a mapping and values, it also passes the mapped person, session, version, tags and metadata to the children. `built`
 3. **`boundary_parent` yields the timing for the export.** It yields a start time and sets the end time on exit, from the wall clock. A setup error counts one miss and the body runs untraced. When tracing is off, or the ids lack a trace id, it only times. `built`
 4. **`emit_boundary` exports the boundary span itself, as the trace's root.** It builds the span by hand, with the journaled ids, no parent, and the start and end times it is given (or now, for a missing time). It builds it on the SDK tracer's own processor and scope; the docstring says the SDK's processor drops a span from any other scope. The span carries the trace name and the mapped trace fields. It sends no scores. It returns the span id. `built`
-5. **On the boundary span, the client's environment and release win.** The mapped fields are set first, then the client's environment and release are written over them. So the boundary and the SDK-built spans inside it report the same environment and release. A mapped `release` is overwritten here, and not on an ordinary entry ([trace entry](trace-entry.md), finding 7). `built`
+5. **On the boundary span, the client's environment and release win.** The mapped fields are set first, then the client's environment and release are written over them. So the boundary and the SDK-built spans inside it report the same environment and release. A mapped `release` is overwritten here, and not on an ordinary entry ([CO-ENTRY](trace-entry.md), finding 7). `built`
 6. **Exported twice, the boundary is two spans.** The export does not update a span with the same id; the backend records a second observation. Calling `emit_boundary` exactly once is the caller's job. The docstring names the residual case: the export succeeds, then the journal entry for that step does not commit, and the replay exports a duplicate. A test pins that a second export gives two spans with one span id. `built`
 7. **Missing or malformed ids are handled two ways.** With tracing off, or ids that lack a trace id or span id, `emit_boundary` returns nothing and counts nothing. With ids that are present but not hex, it counts one miss and returns nothing. `built`
 8. **The worked example's version range is stale.** `docs/durable-execution.md` gives the tested SDK range as `langfuse>=4.7.0,<6`. The package has declared `<5` since 0.2.3. `built`
+
+## Connections
+
+One row per connection. Ids are those of [the README](../README.md#element-ids). Direction is one of: calls, is called by, reads, writes. Evidence paths are at the leaf pin, under `provenance_telemetry/`, unless the row says otherwise. Every connection here is inside the caller's process: the component opens no socket and signs in to nothing. The one authenticated hop, the SDK's export to XE-STORE, is the SDK's and is drawn in [FL-TRACE](../flows/agent-call-to-trace-store.md), step 19.
+
+| Other | Direction | Protocol | Authentication | What passes | Evidence |
+|---|---|---|---|---|---|
+| XE-CALLER | is called by | in-process Python call | none: same process | a seed, returned as the ids to journal; ids, mapping and values; a name and the timing | `__init__.py:11`; `boundary.py:43-178` |
+| CO-ENTRY | calls | in-process Python call | none: same process | the seed, for a trace id; mapping and values, for trace attributes and for propagation to children | `boundary.py:24-30`, `:56`, `:102`, `:154` |
+| CO-WITNESS | calls | in-process Python call | none: same process | the SDK client, to install the export witness; a miss and its reason | `boundary.py:59`, `:104`, `:144`, `:177` |
+| XE-ENV | reads | environment variable, through CO-ENTRY's gate | none: same process | whether both keys are set | `boundary.py:25`, `:52`, `:83`, `:133` |
+| XE-OTEL | writes | OpenTelemetry context, in process | none: same process | a non-recording span with the journaled ids, attached as current and detached on exit | `boundary.py:85-97` |
+| XE-SDK | calls | in-process Python call, through the SDK tracer's private processor and scope | none at the call; the SDK holds the keys | a request for a trace id; a hand-built span with the ids, times, name, mapped fields, and the client's environment and release | `boundary.py:54-57`, `:143-174` |
 
 ## Settings and defaults
 

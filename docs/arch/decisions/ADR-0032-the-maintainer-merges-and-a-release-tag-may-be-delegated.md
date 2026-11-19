@@ -4,6 +4,15 @@
 
 `accepted`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | none |
+| flow | none |
+
+No component or flow of these records: it governs the release process.
+
 ## Decision
 
 The repository's maintainer merges pull requests. Tagging a release may be delegated by the maintainer.

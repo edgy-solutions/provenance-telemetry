@@ -1,6 +1,6 @@
 # Trace entry and identity (CO-ENTRY)
 
-The trace entry is where a service's unit of work enters a trace. It opens a new trace or joins one that started upstream, decides the entry span's parent, stamps the caller's mapped fields on the entry, and passes the person, session, tags and metadata to every span opened inside it. The trace id itself comes from a seed the caller supplies, usually the id an upstream service sent. The three W3C Trace Context helpers belong here, because they turn a received header into that seed and parent. For an entry inside a durable runtime that replays its handler, see [replay-safe boundary](replay-safe-boundary.md).
+The trace entry is where a service's unit of work enters a trace. It opens a new trace or joins one that started upstream, decides the entry span's parent, stamps the caller's mapped fields on the entry, and passes the person, session, tags and metadata to every span opened inside it. The trace id itself comes from a seed the caller supplies, usually the id an upstream service sent. The three W3C Trace Context helpers belong here, because they turn a received header into that seed and parent. For an entry inside a durable runtime that replays its handler, see [CO-BOUNDARY](replay-safe-boundary.md).
 
 This record covers what the code provides by default, and what a caller may set. It describes no particular caller, except where a row says which consumer it read.
 
@@ -8,7 +8,7 @@ This record covers what the code provides by default, and what a caller may set.
 
 ## Findings
 
-1. **The entry is a context manager, `observed_trace`.** It takes a mapping, the caller's values, a name, an observation type and an optional parent span id. The body always runs. If setting up the trace fails, the failure is counted and the body runs untraced ([emission witness](emission-witness.md)). `built`
+1. **The entry is a context manager, `observed_trace`.** It takes a mapping, the caller's values, a name, an observation type and an optional parent span id. The body always runs. If setting up the trace fails, the failure is counted and the body runs untraced ([CO-WITNESS](emission-witness.md)). `built`
 2. **The seed is the value of the mapping's `trace_id` slot.** With no such slot, or no value for it, there is no seed.
    - **No seed:** the SDK decides. The entry nests under whatever span is current, else it starts a new trace with an id the SDK mints.
    - **A seed and a parent:** the entry joins the seeded trace under that parent. The parent is the one passed in, or, when none is passed, a current span that belongs to the same trace.
@@ -18,10 +18,25 @@ This record covers what the code provides by default, and what a caller may set.
 4. **A bad parent is counted and dropped.** A parent span id that is not 16 hex characters, or is all zeros, counts one miss and is ignored. So does a parent passed with no seed. `built`
 5. **The root entry is built by hand on the SDK's private tracer.** The SDK's public call cannot start a root on a chosen trace id, so the library builds the span itself, on the SDK tracer's own processor and scope, and stamps it with the client's environment and release, as the SDK stamps its own spans. `built`
 6. **The entry span gets the mapped fields; children get a subset.** On entry, the mapped person, session, release, version, tags and metadata are set on the entry span. The person, session, version, tags and metadata are then passed to every child span opened inside. Release and the trace name are never passed. A value that is not ASCII, or is over 200 characters, is left off the children and stays on the entry. `built`
-7. **A mapped release and the client's release can disagree within one trace.** When the mapping fills the `release` slot, the entry span carries the mapping's value, written over the client's. Its children carry the client's, because release is not passed down. On a boundary span the order is the other way, and the client's release wins ([replay-safe boundary](replay-safe-boundary.md), finding 5). The tests for a shared environment and release use a mapping with no `release` slot. `built`
+7. **A mapped release and the client's release can disagree within one trace.** When the mapping fills the `release` slot, the entry span carries the mapping's value, written over the client's. Its children carry the client's, because release is not passed down. On a boundary span the order is the other way, and the client's release wins ([CO-BOUNDARY](replay-safe-boundary.md), finding 5). The tests for a shared environment and release use a mapping with no `release` slot. `built`
 8. **`set_trace_standard` writes onto whatever span is current.** It sets the mapped fields on the active span and sends the mapping's scores to the current trace. It cannot set the trace id. With no active span, the attributes land on the empty placeholder span and are lost, and no miss is counted. `built`
 9. **The W3C helpers are pure functions.** `parse_traceparent` returns the trace id, parent id and flags, or nothing for an invalid header or for two headers. `parse_tracestate` returns the normalised list or nothing, and trims it from the right past 512 characters. `format_traceparent` writes a version-00 header. The library reads and writes no HTTP headers itself; the caller carries the header and hands its parts to the entry. `built`
 10. **Two docstrings still describe the seed as always hashed.** The module's opening docstring and `observed_trace`'s docstring say the trace id comes from the SDK's seeded hash. Since 0.2.2 a W3C seed is used unchanged (finding 3); the code and its tests say so, and the docstrings do not. `built`
+
+## Connections
+
+One row per connection. Ids are those of [the README](../README.md#element-ids). Direction is one of: calls, is called by, reads, writes. Evidence paths are at the leaf pin, under `provenance_telemetry/`, unless the row says otherwise. Every connection here is inside the caller's process: the component opens no socket and signs in to nothing. The one authenticated hop, the SDK's export to XE-STORE, is the SDK's and is drawn in [FL-TRACE](../flows/agent-call-to-trace-store.md), step 19.
+
+| Other | Direction | Protocol | Authentication | What passes | Evidence |
+|---|---|---|---|---|---|
+| XE-CALLER | is called by | in-process Python call | none: same process | mapping, values, name, observation type, parent span id; W3C header strings, returned parsed or formatted | `__init__.py:10`, `:14`; `emit.py:222-254`, `:330-394`; `w3c.py:1-92` |
+| CO-MAPPING | calls | in-process Python call | none: same process | each projected field's value, for the token | `emit.py:143-147` |
+| CO-WITNESS | calls | in-process Python call | none: same process | the SDK client, to install the export witness; a miss and its reason | `emit.py:352`, `:359`, `:362`, `:383`, `:391` |
+| CO-BOUNDARY | is called by | in-process Python call | none: same process | a seed, returned as a trace id; mapping and values, returned as trace attributes or propagated to children | `boundary.py:24-30`, `:56`, `:102`, `:154` |
+| XE-ENV | reads | environment variable | none: same process | whether both keys are set | `emit.py:114-115` |
+| XE-SDK | calls | in-process Python call | none at the call; the SDK holds the keys | a span's name, type and trace context; mapped attributes; propagated attributes; scores; a seed to hash | `emit.py:214-217`, `:243-252`, `:267-310`, `:325-326`, `:350-381` |
+| XE-OTEL | reads | OpenTelemetry context, in process | none: same process | the current span, for `set_trace_standard` and for a same-trace parent | `emit.py:232-241`, `:371` |
+| XE-OTEL | writes | OpenTelemetry context, in process | none: same process | a hand-built root span, made current | `emit.py:281`, `:310` |
 
 ## Settings and defaults
 
@@ -42,8 +57,8 @@ This record covers what the code provides by default, and what a caller may set.
 
 ## Not established from code
 
-- Whether every consumer sends the parent span id with the trace id. Where it does not, the entry is a root on the right trace and its link to the caller's span is lost. In the consumer read for these records, `edgy-solutions/invincible-agent`, three HTTP receivers drop the parent: the middlewares of engine-w and engine-f, and the analyst's `/analyze` proxy, which forwards the trace id and not the parent. The flow record traces each.
-- Whether every consumer maps the person. In that consumer, four engine entries pass no person value, so their spans carry no user id. This is recorded in the flow record.
+- Whether every consumer sends the parent span id with the trace id. Where it does not, the entry is a root on the right trace and its link to the caller's span is lost. In the consumer read for these records, `edgy-solutions/invincible-agent`, three HTTP receivers drop the parent: the middlewares of engine-w and engine-f, and the analyst's `/analyze` proxy, which forwards the trace id and not the parent. [FL-TRACE](../flows/agent-call-to-trace-store.md) traces each.
+- Whether every consumer maps the person. In that consumer, four engine entries pass no person value, so their spans carry no user id. This is recorded in [FL-TRACE](../flows/agent-call-to-trace-store.md).
 
 ## Sources
 

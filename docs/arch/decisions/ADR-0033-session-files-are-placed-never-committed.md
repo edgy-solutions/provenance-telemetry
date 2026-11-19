@@ -4,6 +4,15 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | none |
+| flow | none |
+
+No component or flow of these records: it governs the repository's working practice.
+
 ## Decision
 
 Maintainers' local working notes live in `sessions/`, which is ignored. They are placed in a recipient's local folder and never committed, pushed or force-added.

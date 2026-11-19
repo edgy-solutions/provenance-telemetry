@@ -4,6 +4,13 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | [CO-MAPPING](../components/mapping-and-redaction.md) |
+| flow | none |
+
 ## Decision
 
 On load, the library refuses a slot outside five trace fields (`trace_id`, `user_id`, `session_id`, `release`, `version`) and a score encoding outside four (`ordinal`, `fraction`, `binary_per_join`, `count_total`). Whether the mapped names are real fields is checked in the repository that owns them.
@@ -14,7 +21,7 @@ The library cannot know a caller's fields without holding its vocabulary ([ADR-0
 
 ## Consequences
 
-An unknown top-level key, such as a misspelled `content_bearing`, is ignored rather than refused ([mapping and redaction](../components/mapping-and-redaction.md), finding 3). The consumer read for these records checks slots, tags, metadata and scores against its code, and does not check `content_bearing`.
+An unknown top-level key, such as a misspelled `content_bearing`, is ignored rather than refused ([CO-MAPPING](../components/mapping-and-redaction.md), finding 3). The consumer read for these records checks slots, tags, metadata and scores against its code, and does not check `content_bearing`.
 
 ## Evidence
 

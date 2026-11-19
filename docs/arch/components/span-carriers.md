@@ -13,7 +13,18 @@ This record covers what the code provides by default, and what a caller may set.
 3. **`litellm_metadata` returns a dict for the proxy's callback.** It carries `generation_name` and the attributes, and, when given, `existing_trace_id`, `trace_user_id`, `session_id` and `tags`. The library's docstring names them as metadata for callbacks that read the request rather than the current span. The library sends nothing itself: the caller passes the dict to the model call, and the proxy's callback decides what reaches the trace. The values are not redacted. `built`
 4. **`traced` defers to the SDK on whether a function's input and output are captured.** It forwards `capture_input` and `capture_output` to the SDK's decorator only when the caller sets them. Left unset, the SDK's environment variable decides, and in the SDK version read that variable defaults to capturing. So by default, a function decorated with `traced` sends its arguments and return value to the trace, unredacted. `built`
 5. **`traced` decides at decoration time.** The enable gate is read when the decorator is applied, normally at import. A process that sets the keys after importing a decorated module is not traced by that decorator. If the SDK cannot be imported or its decorator fails at that moment, `traced` returns the function unchanged and counts no miss. `built`
-6. **`observe_span` is fail-soft and countable; `traced` is fail-soft only.** An error opening or updating an `observe_span` span counts one miss and the block still runs. `traced` never counts (finding 5). `observe_span` also installs the export witness; `traced` does not ([emission witness](emission-witness.md), finding 4). `built`
+6. **`observe_span` is fail-soft and countable; `traced` is fail-soft only.** An error opening or updating an `observe_span` span counts one miss and the block still runs. `traced` never counts (finding 5). `observe_span` also installs the export witness; `traced` does not ([CO-WITNESS](emission-witness.md), finding 4). `built`
+
+## Connections
+
+One row per connection. Ids are those of [the README](../README.md#element-ids). Direction is one of: calls, is called by, reads, writes. Evidence paths are at the leaf pin, under `provenance_telemetry/`, unless the row says otherwise. Every connection here is inside the caller's process: the component opens no socket and signs in to nothing. The one authenticated hop, the SDK's export to XE-STORE, is the SDK's and is drawn in [FL-TRACE](../flows/agent-call-to-trace-store.md), step 19.
+
+| Other | Direction | Protocol | Authentication | What passes | Evidence |
+|---|---|---|---|---|---|
+| XE-CALLER | is called by | in-process Python call | none: same process | an operation name and attributes; for `litellm_metadata`, trace id, person, session and tags, returned as a dict the caller hands on; a function to decorate | `__init__.py:12`; `spans.py:27-122` |
+| XE-SDK | calls | in-process Python call | none at the call; the SDK holds the keys | `observe_span`: a span's name and its attributes as metadata; `traced`: the function, name, type, and the capture flags when set | `spans.py:72-88`, `:104-118` |
+| CO-WITNESS | calls | in-process Python call | none: same process | the SDK client, to install the export witness (`observe_span` only); a miss and its reason | `spans.py:73-79`, `:87-88` |
+| XE-ENV | reads | environment variable | none: same process | whether both keys are set; for `traced`, read once, at decoration | `spans.py:23-24`, `:68`, `:105` |
 
 ## Settings and defaults
 

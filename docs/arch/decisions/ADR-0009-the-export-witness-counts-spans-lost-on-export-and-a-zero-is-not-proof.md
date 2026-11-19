@@ -4,6 +4,13 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | [CO-WITNESS](../components/emission-witness.md) |
+| flow | [FL-TRACE](../flows/agent-call-to-trace-store.md) |
+
 ## Decision
 
 The library wraps the SDK's exporters once, so a refused or raising export adds the number of spans in that batch to the miss counter. The counter's documentation says a zero means no loss was seen, not that spans arrived; that needs a known span read back from the store.
@@ -14,7 +21,7 @@ Export runs in the SDK's thread, where the caller cannot see a failure. Install 
 
 ## Consequences
 
-Two entry points, `set_trace_standard` and `traced`, do not install the witness ([emission witness](../components/emission-witness.md), finding 6). The library ships no read-back check.
+Two entry points, `set_trace_standard` and `traced`, do not install the witness ([CO-WITNESS](../components/emission-witness.md), finding 6). The library ships no read-back check.
 
 ## Evidence
 

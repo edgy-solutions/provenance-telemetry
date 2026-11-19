@@ -4,6 +4,15 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | none |
+| flow | none |
+
+No component or flow of these records: it governs the repository's test practice.
+
 ## Decision
 
 After the suite, CI fails if any test was skipped for a missing import.

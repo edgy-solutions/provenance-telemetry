@@ -4,6 +4,13 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | [CO-ENTRY](../components/trace-entry.md), [CO-WITNESS](../components/emission-witness.md), [CO-BOUNDARY](../components/replay-safe-boundary.md) |
+| flow | none |
+
 ## Decision
 
 To build a root on a chosen trace id, and to export the boundary span, the library uses the SDK's private tracer, its processor and its instrumentation scope. The export witness reaches the processor list the same way.

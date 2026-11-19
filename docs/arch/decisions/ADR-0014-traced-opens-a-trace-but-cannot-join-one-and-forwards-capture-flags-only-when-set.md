@@ -4,6 +4,13 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | [CO-SPANS](../components/span-carriers.md) |
+| flow | [FL-TRACE](../flows/agent-call-to-trace-store.md) |
+
 ## Decision
 
 `traced` wraps the SDK's decorator, which mints its own id, so it cannot open on a chosen trace id; an entry that must join uses `observed_trace`. It forwards `capture_input` and `capture_output` to the SDK only when the caller sets them.
@@ -14,7 +21,7 @@ It generalises an older consumer decorator into the library (commit `fc930a0`). 
 
 ## Consequences
 
-In the SDK version read, that setting defaults to capturing, so by default a decorated function's arguments and return value go to the trace ([span carriers](../components/span-carriers.md), finding 4).
+In the SDK version read, that setting defaults to capturing, so by default a decorated function's arguments and return value go to the trace ([CO-SPANS](../components/span-carriers.md), finding 4).
 
 ## Evidence
 

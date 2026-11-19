@@ -4,6 +4,13 @@
 
 `built`. Enforced in this repository.
 
+## Governs
+
+| Kind | Ids |
+|---|---|
+| component | [CO-ENTRY](../components/trace-entry.md), [CO-SPANS](../components/span-carriers.md), [CO-WITNESS](../components/emission-witness.md), [CO-BOUNDARY](../components/replay-safe-boundary.md) |
+| flow | [FL-TRACE](../flows/agent-call-to-trace-store.md) |
+
 ## Decision
 
 Nothing the library does raises into the caller's work. A failure is logged and counted, and the work goes on. A missing seed opens a fresh trace rather than raising.
@@ -14,7 +21,7 @@ The library is a witness channel, not a gate: the observing channel must never b
 
 ## Consequences
 
-A caller that forgets its seed gets an orphan trace and no error (`README.md:72`). The test named for an outage reaches the missing-SDK branch, not a refusing server ([emission witness](../components/emission-witness.md), finding 11). Counting a miss is a private function, which the consumer read for these records imports by name.
+A caller that forgets its seed gets an orphan trace and no error (`README.md:72`). The test named for an outage reaches the missing-SDK branch, not a refusing server ([CO-WITNESS](../components/emission-witness.md), finding 11). Counting a miss is a private function, which the consumer read for these records imports by name.
 
 ## Evidence
 

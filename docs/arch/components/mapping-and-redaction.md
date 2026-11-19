@@ -1,6 +1,6 @@
 # Mapping and redaction (CO-MAPPING)
 
-The mapping is the caller's half of the library. A caller writes down, in its own vocabulary, which of its provenance fields fill which trace fields, and which of them carry content that must not leave the process as written. The library loads that mapping, checks its shape, and applies it wherever it projects the caller's values onto a trace. Redaction is the hash it puts in place of a content-bearing value. How the projection reaches a span is in [trace entry](trace-entry.md) and [replay-safe boundary](replay-safe-boundary.md); it is not repeated here.
+The mapping is the caller's half of the library. A caller writes down, in its own vocabulary, which of its provenance fields fill which trace fields, and which of them carry content that must not leave the process as written. The library loads that mapping, checks its shape, and applies it wherever it projects the caller's values onto a trace. Redaction is the hash it puts in place of a content-bearing value. How the projection reaches a span is in [CO-ENTRY](trace-entry.md) and [CO-BOUNDARY](replay-safe-boundary.md); it is not repeated here.
 
 This record covers what the code provides by default, and what a caller may set. It describes no particular caller, except where a row says which consumer it read.
 
@@ -16,8 +16,18 @@ This record covers what the code provides by default, and what a caller may set.
 6. **Only projected fields are emitted.** The library emits a caller's value only where a slot, the tag list or the metadata list names it. `content_bearing` does not select fields to emit; it changes how a field that is already projected is written. A field listed only under `content_bearing` is never emitted. `built`
 7. **Redaction is hash, don't drop.** A content-bearing value is replaced by `sha1:` and the first 16 hex characters of the SHA-1 of its string form. The same value always gives the same token, so two traces that mention it still join on the token. `built`
 8. **No key or salt enters the hash.** The token is the same in every process and every deployment. A value drawn from a small or guessable set, such as an identifier with a known format, can be recovered by hashing candidates and comparing. The source calls the token "non-reversible"; that holds for free text, not for such identifiers. `built`
-9. **Redaction applies to the projection and to nothing else.** It is applied, through one function, to slot values, tags and metadata wherever the mapping is projected: on an entry, on the active span, in the attributes propagated to children, and on a boundary span. It is not applied to a span carrier's attributes, to model-call metadata, or to a function's captured input and output ([span carriers](span-carriers.md), findings 2 to 4). `built`
+9. **Redaction applies to the projection and to nothing else.** It is applied, through one function, to slot values, tags and metadata wherever the mapping is projected: on an entry, on the active span, in the attributes propagated to children, and on a boundary span. It is not applied to a span carrier's attributes, to model-call metadata, or to a function's captured input and output ([CO-SPANS](span-carriers.md), findings 2 to 4). `built`
 10. **Three of the four score encodings are the same arithmetic.** `count_total` turns a pair into a fraction, and 0.0 when the denominator is zero. `ordinal`, `fraction` and `binary_per_join` all send the value as a float, unchanged. The encoding names a meaning the library does not check. No test asserts a score's value. `built`
+
+## Connections
+
+One row per connection. Ids are those of [the README](../README.md#element-ids). Direction is one of: calls, is called by, reads, writes. Evidence paths are at the leaf pin, under `provenance_telemetry/`, unless the row says otherwise. Every connection here is inside the caller's process: the component opens no socket and signs in to nothing. The one authenticated hop, the SDK's export to XE-STORE, is the SDK's and is drawn in [FL-TRACE](../flows/agent-call-to-trace-store.md), step 19.
+
+| Other | Direction | Protocol | Authentication | What passes | Evidence |
+|---|---|---|---|---|---|
+| XE-CALLER | is called by | in-process Python call | none: same process | a path or dict, returned as a `Mapping`; a value to `redact`, returned as its token | `__init__.py:9`, `:13`; `mapping.py:62-69`; `redact.py:15-21` |
+| XE-MAPFILE | reads | YAML file, safe loader | the process's file access | the mapping's sections | `mapping.py:68` |
+| CO-ENTRY | is called by | in-process Python call | none: same process | a projected field's value, returned as itself or as its token; the `Mapping` it projects | `emit.py:32-33`, `:143-147` |
 
 ## Settings and defaults
 
