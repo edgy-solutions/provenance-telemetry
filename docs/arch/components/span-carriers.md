@@ -41,11 +41,11 @@ All paths are at `e84fd29a66c6207ae94131c78bb777e6ddfba3f6` unless the row names
 
 | Claim | Source | Decision | Evidence | Status |
 |---|---|---|---|---|
-| One descriptor, two carriers | `spans.py:27-32`, `:48-58`, `:67` | not stated | `test_path_equivalence.py`: `test_carriers_share_one_shape` | `built` |
-| `observe_span` nests and writes unredacted metadata | `spans.py:61-89`, `:76`, `:85` | not stated | `test_boundary_v4.py`: `test_observed_trace_propagates_and_drops_bad_values` (nesting); no test reads the metadata | `built` |
-| `litellm_metadata` keys | `spans.py:35-58` | not stated | `test_path_equivalence.py`: `test_carriers_share_one_shape` | `built` |
-| `traced` forwards capture flags only when set | `spans.py:92-122`, `:114-117` | not stated | `test_w3c_v022.py`: `test_traced_default_passes_neither_capture_key`, `test_traced_capture_false_is_forwarded` | `built` |
+| One descriptor, two carriers | `spans.py:27-32`, `:48-58`, `:67` | [ADR-0013](../decisions/ADR-0013-two-carriers-share-one-span-shape.md) | `test_path_equivalence.py`: `test_carriers_share_one_shape` | `built` |
+| `observe_span` nests and writes unredacted metadata | `spans.py:61-89`, `:76`, `:85` | [ADR-0013](../decisions/ADR-0013-two-carriers-share-one-span-shape.md) | `test_boundary_v4.py`: `test_observed_trace_propagates_and_drops_bad_values` (nesting); no test reads the metadata | `built` |
+| `litellm_metadata` keys | `spans.py:35-58` | [ADR-0013](../decisions/ADR-0013-two-carriers-share-one-span-shape.md) | `test_path_equivalence.py`: `test_carriers_share_one_shape` | `built` |
+| `traced` forwards capture flags only when set | `spans.py:92-122`, `:114-117` | [ADR-0014](../decisions/ADR-0014-traced-opens-a-trace-but-cannot-join-one-and-forwards-capture-flags-only-when-set.md) | `test_w3c_v022.py`: `test_traced_default_passes_neither_capture_key`, `test_traced_capture_false_is_forwarded` | `built` |
 | SDK default: capture on | langfuse 4.18.0, `_client/observe.py:119`, `:196-198` | — | — | `built` |
-| Decoration-time gate; silent fallback | `spans.py:104-120`; `README.md`, section "Enabling it" | not stated | `test_traced.py`: `test_disabled_is_passthrough`, `test_enabled_still_runs_the_function` | `built` |
-| `observe_span` counts; `traced` does not | `spans.py:73-88`; `spans.py:119-120` | not stated | no test for either | `built` |
-| Consumer turns capture off | edgy-solutions/invincible-agent at `6b3e8ef`: `baml_shared/telemetry.py:27-31`, `:196-205` | not stated | — | `built` |
+| Decoration-time gate; silent fallback | `spans.py:104-120`; `README.md`, section "Enabling it" | [ADR-0007](../decisions/ADR-0007-without-both-keys-the-library-does-nothing.md) | `test_traced.py`: `test_disabled_is_passthrough`, `test_enabled_still_runs_the_function` | `built` |
+| `observe_span` counts; `traced` does not | `spans.py:73-88`; `spans.py:119-120` | [ADR-0008](../decisions/ADR-0008-emission-fails-soft-and-is-counted-and-never-refuses-the-work.md) | no test for either | `built` |
+| Consumer turns capture off | edgy-solutions/invincible-agent at `6b3e8ef`: `baml_shared/telemetry.py:27-31`, `:196-205` | [ADR-0035](../decisions/ADR-0035-model-call-text-stays-out-of-spans-and-labelled-text-is-dropped-not-kept.md) | — | `built` |

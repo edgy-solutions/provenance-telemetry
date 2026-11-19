@@ -55,3 +55,4 @@ The records split it into five components:
 | [components/emission-witness.md](components/emission-witness.md) | component | draft |
 | [components/replay-safe-boundary.md](components/replay-safe-boundary.md) | component | draft |
 | [flows/agent-call-to-trace-store.md](flows/agent-call-to-trace-store.md) | flow | draft |
+| [decisions/README.md](decisions/README.md) | decision index, 35 records | draft |
