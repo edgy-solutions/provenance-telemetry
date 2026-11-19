@@ -42,7 +42,7 @@ This record covers what the code provides by default, and what a caller may set.
 
 ## Not established from code
 
-- Whether every consumer sends the parent span id with the trace id. Where it does not, the entry is a root on the right trace and its link to the caller's span is lost. In the consumer read for these records, `edgy-solutions/invincible-agent`, one HTTP entry passes no parent: engine-w's middleware.
+- Whether every consumer sends the parent span id with the trace id. Where it does not, the entry is a root on the right trace and its link to the caller's span is lost. In the consumer read for these records, `edgy-solutions/invincible-agent`, three HTTP receivers drop the parent: the middlewares of engine-w and engine-f, and the analyst's `/analyze` proxy, which forwards the trace id and not the parent. The flow record traces each.
 - Whether every consumer maps the person. In that consumer, four engine entries pass no person value, so their spans carry no user id. This is recorded in the flow record.
 
 ## Sources
@@ -62,4 +62,4 @@ All paths are at `e84fd29a66c6207ae94131c78bb777e6ddfba3f6` unless the row names
 | W3C helpers are pure | `w3c.py:1-92` | not stated | `test_w3c_v022.py`: `test_valid_00`, `test_invalid_traceparent`, `test_higher_version_with_suffix_accepted`, `test_two_traceparent_headers_rejected`, `test_format_traceparent_roundtrip`, the six `test_tracestate_*` tests | `built` |
 | Stale docstrings | `emit.py:11-12`, `:334-336` | not stated | — | `built` |
 | SDK settings for environment and release | langfuse 4.18.0, `_client/client.py:346-353` | — | — | `built` |
-| Consumer: one entry without a parent | edgy-solutions/invincible-agent at `6b3e8ef`: `agent_fleet/weaviate_expert/main.py:382-392` | edgy-solutions/invincible-agent ADR-0038 | — | `built` |
+| Consumer: three receivers without a parent | edgy-solutions/invincible-agent at `6b3e8ef`: `agent_fleet/weaviate_expert/main.py:382-392`; `agent_fleet/presentation_agent/main.py:192-202`; `agent_fleet/restate_analyst/main.py:4350-4356` | edgy-solutions/invincible-agent ADR-0038 | — | `built` |
