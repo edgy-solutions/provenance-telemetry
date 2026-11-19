@@ -21,13 +21,13 @@ This record covers what the code provides by default, and what a caller may set.
 
 ## Connections
 
-One row per connection. Ids are those of [the README](../README.md#element-ids). Direction is one of: calls, is called by, reads, writes. Evidence paths are at the leaf pin, under `provenance_telemetry/`, unless the row says otherwise. Every connection here is inside the caller's process: the component opens no socket and signs in to nothing. The one authenticated hop, the SDK's export to XE-STORE, is the SDK's and is drawn in [FL-TRACE](../flows/agent-call-to-trace-store.md), step 19.
+One row per connection. Ids are those of [the README](../README.md#element-ids). Direction is one of: calls, is called by, reads, writes. Evidence paths are at the leaf pin, under `provenance_telemetry/`, unless the row says otherwise. Every connection here is inside the caller's process: the component opens no socket and signs in to nothing. The one authenticated hop, the SDK's export to XE-STORE, is the SDK's and is drawn in [FL-TRACE](../flows/agent-call-to-trace-store.md), step 19. Status is one of the four in [the status vocabulary](../README.md#status-vocabulary); every row here is `built`, and its evidence is the file and line at the leaf pin.
 
-| Other | Direction | Protocol | Authentication | What passes | Evidence |
-|---|---|---|---|---|---|
-| XE-CALLER | is called by | in-process Python call | none: same process | a path or dict, returned as a `Mapping`; a value to `redact`, returned as its token | `__init__.py:9`, `:13`; `mapping.py:62-69`; `redact.py:15-21` |
-| XE-MAPFILE | reads | YAML file, safe loader | the process's file access | the mapping's sections | `mapping.py:68` |
-| CO-ENTRY | is called by | in-process Python call | none: same process | a projected field's value, returned as itself or as its token; the `Mapping` it projects | `emit.py:32-33`, `:143-147` |
+| Other | Direction | Protocol | Authentication | What passes | Status | Evidence |
+|---|---|---|---|---|---|---|
+| XE-CALLER | is called by | in-process Python call | none: same process | a path or dict, returned as a `Mapping`; a value to `redact`, returned as its token | `built` | `__init__.py:9`, `:13`; `mapping.py:62-69`; `redact.py:15-21` |
+| XE-MAPFILE | reads | YAML file, safe loader | the process's file access | the mapping's sections | `built` | `mapping.py:68` |
+| CO-ENTRY | is called by | in-process Python call | none: same process | a projected field's value, returned as itself or as its token; the `Mapping` it projects | `built` | `emit.py:32-33`, `:143-147` |
 
 ## Settings and defaults
 

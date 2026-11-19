@@ -17,14 +17,14 @@ This record covers what the code provides by default, and what a caller may set.
 
 ## Connections
 
-One row per connection. Ids are those of [the README](../README.md#element-ids). Direction is one of: calls, is called by, reads, writes. Evidence paths are at the leaf pin, under `provenance_telemetry/`, unless the row says otherwise. Every connection here is inside the caller's process: the component opens no socket and signs in to nothing. The one authenticated hop, the SDK's export to XE-STORE, is the SDK's and is drawn in [FL-TRACE](../flows/agent-call-to-trace-store.md), step 19.
+One row per connection. Ids are those of [the README](../README.md#element-ids). Direction is one of: calls, is called by, reads, writes. Evidence paths are at the leaf pin, under `provenance_telemetry/`, unless the row says otherwise. Every connection here is inside the caller's process: the component opens no socket and signs in to nothing. The one authenticated hop, the SDK's export to XE-STORE, is the SDK's and is drawn in [FL-TRACE](../flows/agent-call-to-trace-store.md), step 19. Status is one of the four in [the status vocabulary](../README.md#status-vocabulary); every row here is `built`, and its evidence is the file and line at the leaf pin.
 
-| Other | Direction | Protocol | Authentication | What passes | Evidence |
-|---|---|---|---|---|---|
-| XE-CALLER | is called by | in-process Python call | none: same process | an operation name and attributes; for `litellm_metadata`, trace id, person, session and tags, returned as a dict the caller hands on; a function to decorate | `__init__.py:12`; `spans.py:27-122` |
-| XE-SDK | calls | in-process Python call | none at the call; the SDK holds the keys | `observe_span`: a span's name and its attributes as metadata; `traced`: the function, name, type, and the capture flags when set | `spans.py:72-88`, `:104-118` |
-| CO-WITNESS | calls | in-process Python call | none: same process | the SDK client, to install the export witness (`observe_span` only); a miss and its reason | `spans.py:73-79`, `:87-88` |
-| XE-ENV | reads | environment variable | none: same process | whether both keys are set; for `traced`, read once, at decoration | `spans.py:23-24`, `:68`, `:105` |
+| Other | Direction | Protocol | Authentication | What passes | Status | Evidence |
+|---|---|---|---|---|---|---|
+| XE-CALLER | is called by | in-process Python call | none: same process | an operation name and attributes; for `litellm_metadata`, trace id, person, session and tags, returned as a dict the caller hands on; a function to decorate | `built` | `__init__.py:12`; `spans.py:27-122` |
+| XE-SDK | calls | in-process Python call | none at the call; the SDK holds the keys | `observe_span`: a span's name and its attributes as metadata; `traced`: the function, name, type, and the capture flags when set | `built` | `spans.py:72-88`, `:104-118` |
+| CO-WITNESS | calls | in-process Python call | none: same process | the SDK client, to install the export witness (`observe_span` only); a miss and its reason | `built` | `spans.py:73-79`, `:87-88` |
+| XE-ENV | reads | environment variable | none: same process | whether both keys are set; for `traced`, read once, at decoration | `built` | `spans.py:23-24`, `:68`, `:105` |
 
 ## Settings and defaults
 
