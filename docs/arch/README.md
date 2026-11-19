@@ -54,3 +54,4 @@ The records split it into five components:
 | [components/span-carriers.md](components/span-carriers.md) | component | draft |
 | [components/emission-witness.md](components/emission-witness.md) | component | draft |
 | [components/replay-safe-boundary.md](components/replay-safe-boundary.md) | component | draft |
+| [flows/agent-call-to-trace-store.md](flows/agent-call-to-trace-store.md) | flow | draft |
