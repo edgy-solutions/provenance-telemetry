@@ -45,8 +45,8 @@ These are the keys of a mapping. Nothing in this component reads the environment
 
 ## Gaps
 
-- **A misspelled section is accepted** (finding 3). The likeliest misspelling to matter is `content_bearing`, whose loss sends content as written. `not built`
-- **The token is unkeyed** (finding 8). It protects free text; it does not protect an identifier drawn from a known format. `not built`
+- **A misspelled section is accepted** (finding 3). The likeliest misspelling to matter is `content_bearing`, whose loss sends content as written. `built`
+- **The token is unkeyed** (finding 8). It protects free text; it does not protect an identifier drawn from a known format. `built`
 - **Score encodings are names without behaviour** (finding 10), and no test reads a score's value. `built`, untested
 
 ## Not established from code

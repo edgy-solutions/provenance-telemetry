@@ -46,9 +46,9 @@ One row per connection. Ids are those of [the README](../README.md#element-ids).
 
 ## Gaps
 
-- **The counter lives in the process and nothing publishes it** (findings 4, 8). A consumer must export it as a metric itself, and pair it with a read-back. `not built` in the library
+- **The counter lives in the process and nothing publishes it** (findings 4, 8). A consumer must export it as a metric itself, and pair it with a read-back. `built`
 - **Two entry points never install the witness** (finding 6). `built`
-- **No public way to count a consumer's miss** (finding 10). `not built`
+- **No public way to count a consumer's miss** (finding 10). `built`
 - **The outage test is mislabelled** (finding 11): its name says outage, its path is a missing SDK. `built`
 
 ## Not established from code

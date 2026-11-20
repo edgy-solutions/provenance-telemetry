@@ -17,7 +17,9 @@ Every claim carries exactly one status.
 | `accepted` | A decision record accepts it, and no code does it yet. | The decision record. |
 | `proposed` | It is written down as intent, but not accepted or built. | Where it is written. |
 
-A gap is a claim a reader would expect and the library does not meet. Its status is the status of whatever partial thing exists. A gap with nothing built is written `not built`.
+A gap is a claim a reader would expect and the library does not meet. A gap carries the status of the condition it describes, because that is what its evidence supports: a gap that says the code does something, and cites the lines, is `built`. **`built` on a gap never means the fix is built.** A fix would be a separate roadmap row with its own status, usually `proposed`. These records hold no roadmap rows, because no fix is written down as intent.
+
+Only the four above are statuses. Something that could not be established from the code is an entry in its record's "Not established from code" list, not a claim with a status.
 
 A CI run is in process. A claim about the code's behaviour that a CI run exercised may be `measured`, citing the run and saying "in CI, in process". A claim about a deployed service or a real backend is not measured by an in-process run, and stays `built`. These records cite tests, not runs, so their claims stay `built` until a row cites a run.
 
